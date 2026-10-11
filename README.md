@@ -114,6 +114,7 @@ Start-Process .\index.html
 | 模块注册顺序（四个 ui 均在 boot.js 之前） | ✅ 已确认 |
 | ③ 家属端 7 阶段 × 未登记/转呼/重置 分支 | ✅ `node tools/family-smoke.js .` → **57/57 通过** |
 | ④ 志愿者端 7 阶段 × 接单/转派/电话三态/重置（94 项） | ✅ `node tools/volunteer-smoke.js .` → **94/94 通过** |
-| 浏览器实际运行效果 | ⚠️ **未测**，请刷新 `index.html` 自行确认（尤其视频窗口与占位画面） |
+| 四列手机布局（真浏览器渲染） | ✅ Edge 无头实测 1920×1080 / 1366×768，IDLE / AUTO_ESCALATE / VIDEO_SESSION 三态：四格 `scrollHeight == clientHeight`（无溢出、无重叠），等比缩放由 `--phone-scale` 驱动 |
+| 浏览器实际运行效果 | ⚠️ **仍未测**：视频弹窗与队友人脸、语音播报出声、动画观感需真机现场确认 |
 | 四个角色分支合并 | ✅ `a/user` `b/institution` `c/family` `d/volunteer` 已全部并入 `main` |
 | git 首次提交 | ✅ 工作区 clean，未推远程 |

@@ -161,6 +161,49 @@
     if (n >= 1 && n <= App.STAGES.length) { clearTimers(); App.jump(App.STAGES[n - 1]); }
   });
 
+  /* ═══════════ 四列手机等比缩放（framework 维护） ═══════════
+     设计宽度固定 360px（需求.md §4），高度默认 640px。
+     四列并排时面板的可用宽/高常常小于设计尺寸，于是整台手机等比缩小，
+     而不是去改内部尺寸——内部尺寸一动，各模块的绝对定位元素就会挤在一起。
+     规则：
+       · 先按宽度定标；若定标后高度还有富余，就把手机拉高到占满（逻辑高度
+         上限 900px），这样大屏上不会留一大条空白，内容也不容易溢出要滚动；
+       · 高度不够时按高度定标，逻辑高度守着 640px 下限。
+     只写 --phone-scale 与 --phone-h 两个变量，占位盒大小交给 base.css 算。 */
+  var PHONE_W = 360, PHONE_MIN_H = 640, PHONE_MAX_H = 900;
+
+  function fitPhones() {
+    var grid = App.el('grid');
+    if (!grid || !grid.firstElementChild) return;          /* 单测桩里没有真实布局 */
+
+    var panel = grid.firstElementChild;
+    var head  = panel.querySelector ? panel.querySelector('.panel-head') : null;
+    var availW = (panel.clientWidth  || 0) - 20;           /* 左右各留 10px 余量 */
+    var availH = (panel.clientHeight || 0) - (head ? head.offsetHeight : 0) - 16;
+    if (!(availW > 0) || !(availH > 0)) return;
+
+    var scaleMax = Math.min(availW / PHONE_W, availH / PHONE_MIN_H);
+    var scale    = Math.max(0.45, Math.min(scaleMax, 2.2));   /* 兜底上下限，防极端窗口 */
+    var h        = Math.min(availH / scale, PHONE_MAX_H);
+    if (!(h >= PHONE_MIN_H)) h = PHONE_MIN_H;
+
+    var root = document.documentElement;
+    if (root && root.style && root.style.setProperty) {
+      root.style.setProperty('--phone-scale', scale.toFixed(4));
+      root.style.setProperty('--phone-h', Math.round(h) + 'px');
+    }
+    App.state.phoneScale = scale;                          /* 仅调试用 */
+    App.state.phoneH     = Math.round(h);
+  }
+
+  fitPhones();
+  if (window.addEventListener) {
+    window.addEventListener('resize', fitPhones);
+    window.addEventListener('orientationchange', fitPhones);
+    window.addEventListener('load', fitPhones);            /* 字体加载完再量一次 */
+  }
+  if (window.requestAnimationFrame) window.requestAnimationFrame(fitPhones);
+
   /* ═══════════ 启动 ═══════════ */
   wire();
   updateButtons();

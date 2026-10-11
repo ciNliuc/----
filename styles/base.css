@@ -73,12 +73,16 @@ body {
   font-family: Consolas, monospace; letter-spacing: 1px;
 }
 
-/* ─────────── 四宫格 ─────────── */
+/* ─────────── 四列手机 ───────────
+   四列并排（需求.md §4 的 360×640 手机框）。窗口放不下时由 src/boot.js 的
+   fitPhones() 写 --phone-scale（缩放）与 --phone-h（设计高度，≥640），
+   整台手机等比缩放；手机内部布局始终按 360 × --phone-h 排，
+   所以元素相对位置不变、只会整体变小，不会互相重叠。 */
 #grid {
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
   gap: var(--gap);
   padding: var(--gap) 22px;
   min-height: 0;
@@ -103,37 +107,59 @@ body {
 .panel-head {
   flex: 0 0 40px;
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 14px;
+  gap: 8px;
+  padding: 0 12px;
   background: var(--panel-2);
   border-bottom: 1px solid var(--line);
+  min-width: 0;
 }
 
-.role  { font-size: 15px; font-weight: 600; }
+/* 四列变窄后，标题过长时省略而不是把角标挤出去 */
+.role {
+  font-size: 15px; font-weight: 600;
+  min-width: 0; overflow: hidden;
+  white-space: nowrap; text-overflow: ellipsis;
+}
 
 .badge {
   font-size: 12px; font-weight: 700;
   padding: 3px 10px; border-radius: 999px;
   background: #30363d; color: var(--text-dim);
   transition: background .2s, color .2s;
+  flex: 0 0 auto; white-space: nowrap;
 }
 .badge.on     { background: var(--accent); color: #fff; }
 .badge.danger { background: var(--danger); color: #fff; }
 .badge.warn   { background: var(--warn);   color: #241c00; }
 .badge.ok     { background: var(--ok);     color: #04260d; }
 
-/* ─────────── 手机外壳 ─────────── */
+/* ─────────── 手机外壳（设计宽 360px，整体等比缩放） ─────────── */
+/* .phone-fit：占位盒 + 居中。宽高由 --phone-scale / --phone-h 算出来，
+   JS 只写这两个变量，其余全部交给 CSS。 */
+.phone-fit {
+  flex: 0 0 auto;
+  margin: auto;                             /* 在面板剩余空间内水平垂直居中 */
+  position: relative;
+  width:  calc(360px * var(--phone-scale, 1));
+  height: calc(var(--phone-h, 640px) * var(--phone-scale, 1));
+}
+
+/* .phone：内部永远按 360 × --phone-h 排内容，再用 transform 缩放到 .phone-fit。
+   用 transform（而不是改内部尺寸）是关键：内部布局与字号一个都不动，
+   元素之间的相对位置和设计稿完全一致，缩小时不会挤到一起或压字。 */
 .phone {
-  flex: 1 1 auto;
-  margin: 10px auto;
-  width: min(290px, 92%);
+  position: absolute;
+  left: 0; top: 0;
+  width: 360px;
+  height: var(--phone-h, 640px);            /* 设计尺寸，默认 640（需求.md §4） */
+  transform: scale(var(--phone-scale, 1));
+  transform-origin: top left;
   background: #05070a;
   border: 7px solid #232b36;
   border-radius: 30px;
-  position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  min-height: 0;
 }
 
 .notch {
@@ -147,6 +173,7 @@ body {
   display: flex; flex-direction: column;
   gap: 10px;
   overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
   scrollbar-width: thin;
 }
