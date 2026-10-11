@@ -177,5 +177,6 @@ App.reset()
 | 日期 | 修改 | 修改人 |
 |---|---|---|
 | — | 首次定稿 | 框架负责人 |
+| 2026-10-11 | 补实现 §5 已约定但一直缺失的订阅（core.state.js）：`volunteer:onSite`（`VIDEO_SESSION` → `ON_SITE`，带 stage 校验，防重复点击越级）。D 端 `ui.volunteer.js` 的「我已到达现场」由此真正生效，模块自己不再调用 `App.next()`（契约 §1）。同时 D 端落地：接单 5 秒倒计时 + 超时自动转派下一位、地图圆点随路线真移动、距离递减改用进入本阶段的相对时间（不再依赖全局 `elapsedMs`）、路演真拨电话三态；`feature.video.js` 降级画面改纯 CSS（不再引用 `assets/video-fallback.png`），`video:open` payload **新增 `fallback` 字段**（原有 `room` / `url` / `ok` 不变）；`styles/modules.css` 只追加「④ 志愿者端」段落。**接口签名 / 事件名 / DOM id / `DEMO_DATA` 字段均未改动** | D（志愿者端 + 视频） |
 
 > 每次修改本文件，必须在此表追加一行，并在群里同步。

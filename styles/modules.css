@@ -1,7 +1,14 @@
 /* ════════════════════════════════════════════════════════════════
    styles/modules.css   ← 各模块私有样式
    规则：每人只在自己的段落里追加，不要改别人的段落。
-        布局与主题变量在 styles/base.css（框架负责人维护）
+         布局与主题变量在 styles/base.css（框架负责人维护）
+
+   ────────────────────────────────────────────────────────────────
+   D 分支（d/volunteer）本次只追加一个段落的内容：
+     「④ 志愿者端」段落末尾新增 8 条规则（地图移动点 / 接单倒计时 /
+     转派态 / 视频通话画面）。
+   不修改任何其他负责人的段落——D 的波形用独立的 .call-wave 类，
+   C 的 .wave 一行都不用动。
    ════════════════════════════════════════════════════════════════ */
 
 /* ─────────── 通用组件（谁都可以用，改之前喊一声） ─────────── */
@@ -146,6 +153,7 @@
 
 .caller { font-size: 20px; font-weight: 800; text-align: center; line-height: 1.35; }
 
+/* D 分支：本段一行未改，保持原样 */
 .wave { display: flex; align-items: center; gap: 6px; height: 52px; }
 .wave i {
   display: block; width: 6px; border-radius: 3px;
@@ -189,21 +197,159 @@
   padding: 2px 8px; border-radius: 6px;
 }
 
-.video-stage {
-  border-radius: 10px; overflow: hidden;
-  background: #05070a; border: 1px solid var(--line);
-  min-height: 54px;
+/* ── D 追加 ①：地图上"我在移动"的那个点 ── */
+.map circle.dot-me {
+  filter: drop-shadow(0 0 5px #2f81f7);
+  animation: dotPulse 1.4s ease-in-out infinite;
 }
-.video-stage img { width: 100%; display: block; }
-.video-live {
-  padding: 10px; font-size: 12px; font-weight: 700;
-  color: var(--ok); background: #10241a; text-align: center;
-  word-break: break-all;
+
+/* ── D 追加 ②：接单 5 秒倒计时 ── */
+.ack-block {
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 10px 12px; border-radius: 10px;
+  background: #1c2430; border: 1px solid var(--line);
 }
-.video-placeholder {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 14px; color: var(--text-dim);
+.ack-bar { height: 6px; border-radius: 3px; background: #21262d; overflow: hidden; }
+.ack-bar > i {
+  display: block; height: 100%; background: var(--danger);
+  transition: width .9s linear;              /* 与 1s 心跳同步，走得顺 */
 }
+
+/* ── D 追加 ③：转派态（上一位超时） ── */
+.push-card.expired {
+  background: linear-gradient(180deg, #241f10, #1a1710);
+  border-color: var(--warn);
+}
+
+/* ── D 追加 ④：视频通话画面（纯 CSS，不引用图片） ──
+   注意：这里**不能**叫 .call-screen —— 那个名字 C 的家属来电界面已经占用了
+        （见上面「③ 紧急联系人端」段落）。用 .video-call 避开冲突。 */
+.video-stage.empty {
+  min-height: 54px; border-radius: 10px;
+  background: #05070a; border: 1px dashed var(--line);
+}
+
+.video-call {
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; padding: 12px 10px 10px;
+  border-radius: 10px;
+  background: radial-gradient(circle at 50% 34%, #22304a 0%, #0a0e14 72%);
+  /* 手机屏只有 290px 宽，画面必须能压缩，不然会撑破宫格 */
+  min-height: 0;
+}
+
+/* "对方出镜"区域：纯 CSS 渐变人像占位 */
+.call-remote {
+  position: relative; width: 100%;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 14px 8px 10px; border-radius: 10px;
+  background: radial-gradient(circle at 50% 120%, #33405c 0%, #161d2b 70%);
+}
+.call-avatar {
+  width: 54px; height: 54px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 800; color: #fff;
+  background: linear-gradient(140deg, #2f81f7, #a371f7);
+  box-shadow: 0 0 22px -4px #2f81f7;
+}
+.call-flag {
+  font-size: 10px; font-weight: 700; color: #241c00;
+  background: var(--warn); padding: 3px 8px; border-radius: 999px;
+}
+
+/* 本机小窗（画中画样式，纯装饰） */
+.call-pip {
+  position: absolute; right: 14px; top: 20px;
+  width: 38px; height: 50px; border-radius: 7px;
+  background: linear-gradient(160deg, #30363d, #161b22);
+  border: 1px solid #475467;
+  display: flex; align-items: flex-end; justify-content: center;
+  font-size: 9px; color: var(--text-dim); padding-bottom: 2px;
+  z-index: 2;
+}
+
+.call-info { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.call-name { font-size: 16px; font-weight: 800; }
+.call-timer {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--ok);
+}
+.rec-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--danger);
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+/* 通话波形：独立实现，不依赖 .wave（条数可变，颜色偏绿＝"活着"） */
+.call-wave { display: flex; align-items: center; gap: 5px; height: 26px; }
+.call-wave i {
+  display: block; width: 4px; border-radius: 2px;
+  background: var(--ok);
+  height: 8px;
+  animation: callWave .9s ease-in-out infinite;
+  animation-delay: var(--d, 0s);
+}
+@keyframes callWave {
+  0%, 100% { height: 8px;  opacity: .55; }
+  50%      { height: 24px; opacity: 1; }
+}
+
+/* 房间名：队友要在大屏上读出来、在手机上敲进去，必须够大 */
+.call-room {
+  width: 100%; text-align: center;
+  padding: 6px 8px; border-radius: 8px;
+  background: rgba(47, 129, 247, .12);
+  border: 1px dashed var(--accent);
+}
+.call-room-code {
+  font-size: 12px; font-weight: 700; color: #9ecbff;
+  word-break: break-all; line-height: 1.35;
+}
+
+/* 底部通话控制（纯装饰，不可点） */
+.call-ctrl { display: flex; gap: 12px; }
+.call-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid rgba(255, 255, 255, .12);
+}
+.call-btn.hang { background: rgba(248, 81, 73, .22); border-color: rgba(248, 81, 73, .5); }
+
+/* ── D 追加 ⑤：路演真拨电话（志愿者在自己手机上打） ──
+   号码做成"最小披露"：志愿者只看到脱敏的 138****0000。 */
+.call-card {
+  display: flex; flex-direction: column; gap: 7px;
+  padding: 12px; border-radius: 10px;
+  background: #1c2430; border: 1px solid var(--line);
+  text-align: center;
+}
+.call-card.calling {
+  border-color: var(--warn);
+  background: linear-gradient(180deg, #241f10, #1c1a12);
+}
+.call-card.connected {
+  border-color: var(--ok);
+  background: linear-gradient(180deg, #10241a, #0d1a13);
+}
+
+.call-num {
+  font-size: 20px; font-weight: 700; letter-spacing: 1.5px;
+  color: var(--text);
+}
+
+.call-live {
+  font-size: 13px; font-weight: 800; color: var(--ok);
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+/* 通话时长：路演时台下要能读出来，做大 */
+.call-timer-lg { font-size: 30px; line-height: 1.1; color: #fff; }
+
+/* 主按钮变体：拨号用危险色，和"求助"呼应 */
+.primary-btn.danger { background: var(--danger); color: #fff; }
 
 /* ════════════════════════════════════════════════════════════════
    收尾回访看板                                              负责人：B
@@ -238,3 +384,30 @@
 .rep-row { display: flex; gap: 10px; font-size: 13px; line-height: 1.7; }
 
 .rep-note { text-align: center; padding-top: 4px; }
+
+/* ════════════════════════════════════════════════════════════════
+   D 分支新增规则汇总（便于 C 复核，无需改动）
+   ════════════════════════════════════════════════════════════════
+
+   本次 D 只动了「④ 志愿者端」段落，新增的类名共 9 个：
+     .map circle.dot-me     地图上移动的那个点
+     .ack-block / .ack-bar  接单 5 秒倒计时
+     .push-card.expired     超时转派态
+     .video-stage.empty     未接通时的占位框
+     .video-call            通话画面外框（**不叫 .call-screen**，
+                            避免和 C 的家属来电界面撞名）
+     .call-remote / .call-avatar / .call-flag    对方出镜区
+     .call-pip              本机小窗
+     .call-info / .call-name / .call-timer / .rec-dot
+     .call-wave / @keyframes callWave            通话波形
+     .call-room / .call-room-code                房间名
+     .call-ctrl / .call-btn / .call-btn.hang     底部控制（纯装饰）
+
+   ⚠️ 一个需要你（C）知道的事：D 最初想在共享段落里加 .call-screen，
+      但它和你的来电界面同名，会互相污染。已改名为 .video-call。
+      你的 .call-screen 完整保留、不受影响。
+
+   ⚠️ 另一个：.call-wave i 用的是 animation-delay: var(--d) 这种写法，
+      由 JS 逐条内联设置延迟。如果目标浏览器不支持在 animation-delay
+      里用 var()，波形会同步起伏（不再错落），其余表现正常。
+   ════════════════════════════════════════════════════════════════ */

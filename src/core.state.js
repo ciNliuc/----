@@ -223,6 +223,14 @@
     if (e.to === 'SOS_TRIGGERED' && !App.state.startedAt) startTicker();
   });
 
+  /* ───────── 志愿者到场（contract.md §5：VIDEO_SESSION → ON_SITE） ─────────
+     D 端（ui.volunteer.js）点「我已到达现场」时 emit('volunteer:onSite')，
+     由这里统一执行阶段流转，模块自己不改阶段。
+     加 stage 校验：只有仍在视频疏导阶段才允许推进一步，防止重复点击越级。 */
+  App.on('volunteer:onSite', function () {
+    if (App.state.stage === 'VIDEO_SESSION') setStage('ON_SITE');
+  });
+
   /* ───────── 重置（contract.md §2） ───────── */
   App.reset = function () {
     stopTicker();
