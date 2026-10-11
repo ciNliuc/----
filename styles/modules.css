@@ -278,6 +278,55 @@
   50%      { height: 46px; opacity: 1; }
 }
 
+/* ── UI-20 锁屏：求助还没升级到家属时，这就是一台安静的手机 ── */
+.lock-screen {
+  flex: 1 1 auto;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 26px 12px 12px;
+  margin: -4px; border-radius: 12px;
+  background: radial-gradient(120% 62% at 50% 0%, #1b2740, #0a0d12 72%);
+}
+
+.lock-time {
+  font-family: Consolas, monospace;
+  font-size: 46px; font-weight: 700; letter-spacing: 1.5px;
+  text-align: center; line-height: 1;
+}
+
+.lock-date {
+  font-size: 12px; color: var(--text-dim);
+  text-align: center; margin-top: -4px;
+}
+
+.lock-foot {
+  font-size: 10px; line-height: 1.6;
+  color: var(--text-dim); text-align: center;
+}
+
+/* ── UI-21 呼出中进度 ── */
+.f-ring {
+  width: 84%;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.f-ring-tip { font-size: 11px; color: var(--text-dim); }
+.f-ring-bar { width: 100%; }
+.f-ring-bar > i { background: var(--ok); }
+
+/* ── UI-22 播报字幕：整段先占位，逐句点亮，不重排 ── */
+.f-lines { display: flex; flex-direction: column; gap: 6px; }
+.f-line {
+  font-size: 12px; line-height: 1.7;
+  color: #6b7481; transition: color .35s ease;
+}
+.f-line.on { color: #c9d1d9; }
+.f-line.on::before {
+  content: '▸ ';
+  color: var(--accent); font-weight: 700;
+}
+
+/* ── UI-23 应答选项与回执 ── */
+.f-choice { display: flex; flex-direction: column; gap: 8px; }
+
 /* ════════════════════════════════════════════════════════════════
    ④ 志愿者端                                               负责人：D
    ════════════════════════════════════════════════════════════════ */

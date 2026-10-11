@@ -14,7 +14,7 @@
 | 假数据 | `src/data.demo.js` | 全员可改 | ✅ 初版 | 换成团队自己的名字/坐标 |
 | ① 求助者端 | `src/ui.user.js` | **A** | 🔄 待细化 | — |
 | ② 机构端 | `src/ui.institution.js` | **B** | ✅ 完成（七阶段 + UI-10~UI-15 + 告警音） | — |
-| ③ 家属端 | `src/ui.family.js` | **C** | 🔄 待细化 | — |
+| ③ 家属端 | `src/ui.family.js` | **C** | ✅ 完成（七阶段 + UI-20~UI-24 + 逐句播报） | — |
 | ④ 志愿者端 | `src/ui.volunteer.js` | **D** | 🔄 待细化 | — |
 | 视频通话 | `src/feature.video.js` | **D** | 🔄 待联调 | 需队友设备配合 |
 | 语音播报 | `src/feature.speech.js` | **C** | ✅ 可用 | Chrome 需一次点击解锁 |
@@ -54,7 +54,7 @@
 - [ ] 四步进度条（`ui.user.js`）
 - [ ] 兜底拨号按钮（`ui.user.js`）
 - [x] 机构派单列表与事件时间线（`ui.institution.js`）
-- [ ] 家属三选项应答（`ui.family.js`）
+- [x] 家属三选项应答（`ui.family.js`）——含回执卡 / 后续卡 / 未接通转呼下一位 / 反悔按钮
 - [ ] 处置记录表单（`ui.volunteer.js`）
 - [ ] 回访看板 4 项指标（`ui.report.js`）
 
@@ -66,6 +66,8 @@
 |---|---|---|---|---|
 | 2026-10-11 | B | 契约 §5 的 `institution:ack` / `demo:closed` 一直没有订阅者（机构端「确认接手」「结束处置」点了没反应） | 框架负责人 | B 已按 A 上次补 `sos:tap` 的先例补上两处订阅并登记 contract.md §9 |
 | 2026-10-11 | B | **合并 A 分支后 `boot.js` 会连跳两级**：`emit('sos:tap')` 已由 core 推进到 `SOS_TRIGGERED`，`boot.js` 紧接着又调了一次 `App.next()` → 直接跳到 `INSTITUTION_ALERT`，`SOS_TRIGGERED` 那一拍看不见（`ui.user.js` 已不再自推阶段） | 框架负责人 | 待修：`boot.js` 的 ▶ 按钮与空格键去掉那句多余的 `App.next()` |
+| 2026-10-11 | C | **`core.state.js` 的 `App.delegate` 每个 role 只有第一次调用生效**（`__delegated` 守卫会静默丢弃后续 selector/handler）。影响全部四个模块：家属端只有第 1 个按钮能点，志愿者端「开始视频」「我已到场」「填写处置记录」全部失效，求助者端兜底拨号失效 | 框架负责人 | 家属端已按「一个 role 只调一次 delegate + 逗号选择器 + 按 id 分派」规避，四个按钮都能点，**不需要等 core 修**。建议框架负责人评估改成 `sc.__delegates` 数组后，家属端可拆回四次调用 |
+| 2026-10-11 | C | `boot.js` 的 `HOLD.AUTO_ESCALATE = 3000ms`：家属外呼全屏只有 3 秒，字幕还没点亮第二句就切到视频阶段 | 框架负责人 | 家属端已兼容（字幕在 `VIDEO_SESSION` 里继续走完、不倒退），但改为 6000ms 观感明显更好。详见 `docs/家属端细化设计.md` §5.1 |
 
 ---
 
