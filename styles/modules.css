@@ -130,6 +130,106 @@
   background: #1c2430;
 }
 
+/* ── 机构工作台抬头：机构名 + 值班在线点 + 工单号 ── */
+.wb-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.wb-name { font-size: 15px; font-weight: 700; line-height: 1.35; }
+
+.wb-live {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; color: var(--ok);
+  background: #10241a; border-radius: 999px; padding: 2px 8px;
+  white-space: nowrap;
+}
+.wb-live i {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--ok);
+  animation: instBlink 1.6s ease-in-out infinite;
+}
+
+.ticket-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  font-size: 11px;
+}
+.ticket-no {
+  color: var(--warn); background: #241f10; border-radius: 6px;
+  padding: 1px 7px; font-weight: 700;
+}
+
+/* ── 值班来电接入（INSTITUTION_ACK_SEC）── */
+.ring-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 10px; border-radius: 10px;
+  background: var(--panel-2);
+}
+.ring-row.on { background: #10241a; }
+.ring-text { font-size: 12px; font-weight: 600; }
+
+.ringwave { display: flex; align-items: center; gap: 3px; height: 22px; flex: 0 0 auto; }
+.ringwave i {
+  display: block; width: 4px; height: 8px; border-radius: 2px;
+  background: var(--danger);
+  animation: instRing .9s ease-in-out infinite;
+}
+.ringwave i:nth-child(2) { animation-delay: .15s; }
+.ringwave i:nth-child(3) { animation-delay: .30s; }
+.ringwave i:nth-child(4) { animation-delay: .45s; }
+.ring-row.on .ringwave i { background: var(--ok); animation: none; height: 8px; }
+
+/* ── UI-12 自动升级红色横幅 ── */
+.escalate {
+  padding: 9px 12px; border-radius: 10px;
+  background: var(--danger); color: #fff;
+  font-size: 16px; font-weight: 800; text-align: center;
+  animation: instEsc .9s ease-in-out infinite;
+}
+
+/* ── UI-14 派单与响应列表 ── */
+.sec-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text-dim);
+  border-bottom: 1px solid var(--line); padding-bottom: 4px;
+}
+
+.dispatch { display: flex; flex-direction: column; gap: 5px; }
+.drow {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; line-height: 1.5;
+  background: var(--panel-2); border-radius: 8px; padding: 5px 8px;
+}
+.drow .kick {
+  flex: 0 0 auto; font-size: 10px; font-weight: 700;
+  border-radius: 4px; padding: 1px 5px;
+  background: #30363d; color: var(--text-dim);
+}
+.drow .kick.fam { background: #2a1517; color: #ff9a94; }
+.drow .kick.vol { background: #101d2e; color: #8fc0ff; }
+.drow .who {
+  flex: 1 1 auto; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.pill {
+  flex: 0 0 auto; font-size: 10px; font-weight: 700;
+  border-radius: 999px; padding: 2px 7px;
+  background: #30363d; color: var(--text-dim);
+}
+.pill.ok     { background: #10241a; color: var(--ok); }
+.pill.on     { background: #101d2e; color: #6cb0ff; }
+.pill.warn   { background: #241f10; color: var(--warn); }
+.pill.danger { background: #2a1517; color: #ff8b84; animation: instBlink 1s ease-in-out infinite; }
+.pill.dim    { background: #21262d; color: var(--text-dim); }
+
+/* ── UI-15 机构处置日志 ── */
+.oplog { display: flex; flex-direction: column; gap: 2px; }
+.oplog-row {
+  display: flex; gap: 6px;
+  font-size: 11px; line-height: 1.6; color: var(--text-dim);
+}
+.oplog-row time { flex: 0 0 auto; color: var(--warn); }
+
+@keyframes instBlink { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@keyframes instRing  { 0%, 100% { height: 8px; opacity: .55; } 50% { height: 22px; opacity: 1; } }
+@keyframes instEsc   { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.4); } }
+
 /* ════════════════════════════════════════════════════════════════
    ③ 紧急联系人端                                           负责人：C
    ════════════════════════════════════════════════════════════════ */
