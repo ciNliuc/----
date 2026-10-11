@@ -39,9 +39,10 @@
 │   ├── ui.volunteer.js        ← ④ 志愿者 + 地图 + 视频             [D]
 │   ├── feature.video.js       ← 真实视频通话拉起 + 降级            [D]
 │   ├── feature.speech.js      ← 中文语音播报                       [C]
+│   ├── feature.voice.js       ← ⑤「留声」：录一段话，求助时可选放出 [框架]
 │   └── ui.report.js           ← 收尾回访卡片 + 数据小结            [B]
 ├── styles/
-│   ├── base.css               ← 深色主题、变量、四宫格布局          [冻结]
+│   ├── base.css               ← 深色主题、变量、四列布局            [冻结]
 │   └── modules.css            ← 各模块私有样式（每人加自己的段落）  [各自追加]
 ├── docs/
 │   ├── 家属端细化设计.md       ← ③ 家属端设计说明与自测清单          [C]
@@ -49,7 +50,8 @@
 └── tools/
     ├── dev-board.md           ← 任务看板：谁在做什么、卡在哪
     ├── family-smoke.js        ← ③ 家属端逻辑自测（Node 零依赖，57 项）
-    └── volunteer-smoke.js     ← ④ 志愿者端 + 视频逻辑自测（Node 零依赖，94 项）
+    ├── volunteer-smoke.js     ← ④ 志愿者端 + 视频逻辑自测（Node 零依赖，94 项）
+    └── voice-smoke.js         ← ⑤ 留声逻辑自测（Node 零依赖，52 项）
 ```
 
 ## 3. 怎么跑
@@ -101,6 +103,7 @@ Start-Process .\index.html
 - [x] 中文语音播报（`src/feature.speech.js`）
 - [x] ④ 视频通话拉起 + 纯 CSS 降级（`src/feature.video.js`）
 - [x] 四个角色分支全部合并进 `main`（本次合并，见 [tools/dev-board.md](tools/dev-board.md) §五）
+- [x] ⑤ **留声**（[需求.md](需求.md) UI-07 / FR-15）：求助前录一段话或选一个音频文件；求助时二选一——「带着留声求助」或「直接求助（原有路径）」；带留声时进 `SOS_TRIGGERED` 放出声音，②③④ 面板头出现留声角标（[src/feature.voice.js](src/feature.voice.js)）
 - [ ] 联调 + 视频接通（需要第二台设备现场验"真出人脸"）
 - [ ] 录制备份视频
 - [ ] 排练 ≥2 遍
@@ -109,12 +112,15 @@ Start-Process .\index.html
 
 | 项 | 状态 |
 |---|---|
-| 13 个 JS 文件语法（`node --check`：`src/*.js` + `tools/*.js`） | ✅ 全部通过 |
+| 13 个 JS 文件语法（`node --check`：`src/*.js` + `tools/*.js`） | ✅ 全部通过（新增 `feature.voice.js` 后为 15 个） |
 | 七个阶段在四个模块都有渲染分支（不会出现空白格） | ✅ 静态核对通过 |
 | 模块注册顺序（四个 ui 均在 boot.js 之前） | ✅ 已确认 |
 | ③ 家属端 7 阶段 × 未登记/转呼/重置 分支 | ✅ `node tools/family-smoke.js .` → **57/57 通过** |
 | ④ 志愿者端 7 阶段 × 接单/转派/电话三态/重置（94 项） | ✅ `node tools/volunteer-smoke.js .` → **94/94 通过** |
 | 四列手机布局（真浏览器渲染） | ✅ Edge 无头实测 1920×1080 / 1366×768，IDLE / AUTO_ESCALATE / VIDEO_SESSION 三态：四格 `scrollHeight == clientHeight`（无溢出、无重叠），等比缩放由 `--phone-scale` 驱动 |
+| ⑤ 留声：两条路径 / 二选一可取消 / 降级 / 七阶段（52 项） | ✅ `node tools/voice-smoke.js .` → **52/52 通过** |
+| 留声不改变四格屏内容（真浏览器实测） | ✅ 带留声与原有路径的四格 `hid` 完全相同（`institution:hid=20` 两条一致，非留声引起）；角标挂在 `.panel-head` |
 | 浏览器实际运行效果 | ⚠️ **仍未测**：视频弹窗与队友人脸、语音播报出声、动画观感需真机现场确认 |
+| 留声真录音（MediaRecorder / 麦克风权限） | ⚠️ **仍未测**：`file://` 下部分浏览器会拒麦克风，现场优先试「录一段」，不行就用「选择音频文件」（该路径已验证可用） |
 | 四个角色分支合并 | ✅ `a/user` `b/institution` `c/family` `d/volunteer` 已全部并入 `main` |
 | git 首次提交 | ✅ 工作区 clean，未推远程 |

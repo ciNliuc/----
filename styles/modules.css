@@ -576,3 +576,50 @@
       由 JS 逐条内联设置延迟。如果目标浏览器不支持在 animation-delay
       里用 var()，波形会同步起伏（不再错落），其余表现正常。
    ════════════════════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════════════════════
+   ⑤ 留声（跨模块，框架维护；能力在 src/feature.voice.js）
+   ════════════════════════════════════════════════════════════════
+   类名一律带 voice- / vc- 前缀，不与 ①②③④ 的既有段落撞名。 */
+
+/* ②③④ 面板头部的留声角标（由 core.state.js 的 renderAll 调
+   feature.voice.js 的 paintVoiceHeads 挂上；手机屏内不加任何东西，
+   所以四格的屏内容与原路径完全一致，不会因此溢出） */
+.voice-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 999px;
+  background: #1b1630; border: 1px solid #3b2d5c;
+  font-size: 11px; color: var(--text-dim);
+  white-space: nowrap; flex: 0 0 auto;
+}
+.voice-chip.playing  { background: #12241a; border-color: #24503a; color: var(--text); }
+.voice-chip .vc-ico  { font-size: 11px; }
+.voice-chip .vc-text { font-weight: 700; }
+.voice-chip .vc-dur  { color: var(--text-dim); }
+.voice-chip.playing .vc-ico { animation: vcPulse 1s ease-in-out infinite; }
+@keyframes vcPulse { 50% { opacity: .3; } }
+
+/* ① 的留声卡：未留声 / 录音中 / 已留声 / 求助后播放中 */
+.voice-card {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 8px 10px; border-radius: 10px;
+  background: #1b1630; border: 1px solid #3b2d5c; border-left: 3px solid var(--purple);
+  flex: 0 0 auto;
+}
+.voice-card.ready { background: #10241a; border-color: #24503a; border-left-color: var(--ok); }
+.voice-card.rec   { background: #2a1517; border-color: #5c2b2b; border-left-color: var(--danger); }
+.voice-head {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700; color: var(--text);
+}
+.voice-head .vc-dur { margin-left: auto; color: var(--text-dim); }
+.voice-note { font-size: 11px; line-height: 1.5; color: var(--text-dim); }
+.voice-row  { display: flex; gap: 6px; }
+.voice-row .ghost-btn, .voice-row .primary-btn,
+.voice-card > .ghost-btn, .voice-card > .primary-btn {
+  flex: 1 1 0; padding: 7px 6px; font-size: 12px;
+}
+
+/* ① 的「要用你的留声吗？」二选一 */
+.voice-choice .primary-btn { width: 100%; font-size: 15px; padding: 14px 10px; }
+.voice-choice .ghost-btn   { width: 100%; }

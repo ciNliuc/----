@@ -20,6 +20,7 @@
 | 语音播报 | `src/feature.speech.js` | **C** | ✅ 可用 | Chrome 需一次点击解锁 |
 | 收尾看板 | `src/ui.report.js` | **B** | 🔄 待细化 | — |
 | 模块样式 | `styles/modules.css` | 各自段落 | 🔄 | 只追加不覆盖（D 只动「④ 志愿者端」段落） |
+| ⑤ 留声 | `src/feature.voice.js` | 框架 | ✅ 完成（录制 / 导入 / 试听 / 播放 + ②③④ 面板头角标；`tools/voice-smoke.js` 52 项） | 真录音需现场开麦克风权限，`file://` 下可能被拒 → 用「选择音频文件」兜底 |
 
 ---
 
@@ -49,6 +50,7 @@
 - [x] 真视频通话**拉起与降级**（`feature.video.js`）——真拉 Jitsi 房间；弹窗被拦走纯 CSS 占位画面，流程不中断
 - [ ] 真视频通话能出人脸 ← 只能现场用第二台设备验（代码侧已就绪）
 - [x] 一键重置（志愿者端状态全清，`tools/volunteer-smoke.js` §9 §12 有断言）
+- [x] **留声**（需求.md UI-07 / FR-15）：求助前录一段话或选一个音频文件，求助时二选一——「带着留声求助」或「直接求助（原有路径）」；带留声时进 `SOS_TRIGGERED` 放出声音，②③④ 面板头出现「已收到留声 / 正在播放留声」角标（`src/feature.voice.js` + `tools/voice-smoke.js`）
 
 ## 四、P1 可砍（时间不够先扔这些）
 
@@ -71,6 +73,7 @@
 | 2026-10-11 | C | `boot.js` 的 `HOLD.AUTO_ESCALATE = 3000ms`：家属外呼全屏只有 3 秒，字幕还没点亮第二句就切到视频阶段 | 框架负责人 | 家属端已兼容（字幕在 `VIDEO_SESSION` 里继续走完、不倒退），但改为 6000ms 观感明显更好。详见 `docs/家属端细化设计.md` §5.1 |
 | 2026-10-11 | D | **`core.state.js` 的 `App.delegate` 每个 role 只有第一次调用生效**（`sc.__delegated` 守卫会静默丢弃后续 selector/handler）。志愿者端有 6 个按钮，全都会变死按钮 | 框架负责人 | D 端按"自己绑一个原生委托 + 按 `data-act` 分派"绕开，**不需要等 core 修**（A 端改为不用 delegate，C 端改为"一个 role 只调一次 + 逗号选择器"）。建议框架负责人评估改成 `sc.__delegates` 数组，之后各端都能拆回自然写法 |
 | 2026-10-11 | D | 契约 §5 约定的 `volunteer:onSite → core 推进 ON_SITE` 一直**没有订阅者**，到场按钮点了阶段不动 | 框架负责人 | 已按 A（`sos:tap`）、B（`institution:ack` / `demo:closed`）同样的先例在 `core.state.js` 补齐，带 stage 校验，并在 `contract.md` §9 追加变更记录；签名/事件名/DOM id 均未改动 |
+| 2026-10-12 | 框架 | 留声角标放哪：先做成插在手机屏内，实测机构端在 `AUTO_ESCALATE` **溢出 61px**（「机构处置日志」被挤到滚动区以下） | — | 改挂 `.panel-head`：手机屏内容一个字节都不动，实测带留声与原有路径的四格 `hid` 完全相同（`institution:hid=20` 两条路径一致，那 20px 是机构端自己在真实 SOS 路径多记一条工单日志造成的，与留声无关） |
 
 ---
 

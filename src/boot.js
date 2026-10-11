@@ -112,9 +112,11 @@
       if (s === 'IDLE') {
         /* 走和用户点按钮完全相同的路径。
            ⚠️ 契约 §5：sos:tap 由 core 统一推进 IDLE → SOS_TRIGGERED，
-           这里**不能**再补一次 App.next()，否则会连跳两级、跳过 SOS_TRIGGERED。 */
+           这里**不能**再补一次 App.next()，否则会连跳两级、跳过 SOS_TRIGGERED。
+           留声：自动演示没有二选一的界面，已留声时就按「带留声」这条线走
+           （voiceReady 为假则与原行为完全一致）。 */
         playing = true;
-        App.emit('sos:tap', { at: Date.now() });
+        App.emit('sos:tap', { at: Date.now(), voice: !!App.state.voiceReady });
 
       } else if (s === 'VIDEO_SESSION') {
         /* ⚠️ 这里是真实用户手势，openVideo 必须同步调用 */
@@ -148,8 +150,11 @@
     if (e.key === 'ArrowRight' || e.key === ' ') {
       e.preventDefault();
       playing = true;
-      /* 契约 §5：IDLE 下的 sos:tap 已由 core 推进，勿再补 App.next() */
-      if (App.state.stage === 'IDLE') { App.emit('sos:tap', {}); }
+      /* 契约 §5：IDLE 下的 sos:tap 已由 core 推进，勿再补 App.next()。
+         留声：与 ▶ 按钮一致，已留声时按「带留声」走。 */
+      if (App.state.stage === 'IDLE') {
+        App.emit('sos:tap', { voice: !!App.state.voiceReady });
+      }
       else App.next();
     }
     /* R ：重置 */

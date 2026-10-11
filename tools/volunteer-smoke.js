@@ -264,7 +264,7 @@ const load = f => vm.runInContext(
   fs.readFileSync(path.join(ROOT, f), 'utf8'), sandbox, { filename: f });
 
 ['src/data.demo.js', 'src/core.state.js', 'src/core.timeline.js',
- 'src/feature.speech.js', 'src/feature.video.js',
+ 'src/feature.speech.js', 'src/feature.video.js', 'src/feature.voice.js',
  'src/ui.volunteer.js', 'src/boot.js'].forEach(load);
 
 const App  = sandbox.App;

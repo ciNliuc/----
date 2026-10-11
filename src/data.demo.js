@@ -16,6 +16,8 @@ window.APP_CONFIG = {
   MAP_TRAVEL_SEC:      30,    // 地图上志愿者走完全程的时间（距离递减动画）
   CANCEL_WINDOW_SEC:   1,     // 求救可取消窗口。真实 3 秒
 
+  VOICE_MAX_SEC:       30,    // 「留声」单次录制上限（feature.voice.js）
+
   AUTO_PLAY:  true,           // 自动演示模式，免手动点击
   AUTO_PLAY_STEP_MS: 2200,    // 自动模式下每步间隔
 

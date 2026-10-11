@@ -49,7 +49,18 @@
     startedAt:  null,
     elapsedMs:  0,
     videoRoom:  null,
-    videoOpen:  false
+    videoOpen:  false,
+
+    /* ───────── 留声（feature.voice.js）─────────
+       voiceReady/voiceName/voiceDurMs：留声本体，App.reset() 不清，
+         一场演示可以反复走「带留声」和「原有路径」两条线；
+       voiceMode：本次求助走哪条路，由 sos:tap 的 payload 落库；
+       voicePlaying：是否正在播放，②③④ 的留声条据此变「正在播放」。 */
+    voiceReady:   false,
+    voiceName:    '',
+    voiceDurMs:   0,
+    voiceMode:    null,
+    voicePlaying: false
   };
 
   /* ───────── 事件总线 ───────── */
@@ -132,6 +143,9 @@
     for (var i = 0; i < PANELS.length; i++) safeRender(PANELS[i]);
     paintPanels();
     paintHeader();
+    /* 留声角标（②③④ 面板头部）：跨模块能力，由 feature.voice.js 提供。
+       挂头部而不是屏内，是为了不改变任何一格原有的屏内容高度。 */
+    if (App.paintVoiceHeads) App.paintVoiceHeads();
   }
 
   App.render = function (role) {
@@ -226,9 +240,18 @@
   /* ───────── 求助触发（contract.md §5：sos:tap 由 core 推进阶段） ─────────
      A 端（ui.user.js）在可取消窗口走完后 emit('sos:tap')，
      由这里统一执行 IDLE → SOS_TRIGGERED，模块自己不改阶段。
-     加 stage 校验：防止长按 / 连点等竞态在非 IDLE 阶段误推进。 */
-  App.on('sos:tap', function () {
-    if (App.state.stage === 'IDLE') App.next();
+     加 stage 校验：防止长按 / 连点等竞态在非 IDLE 阶段误推进。
+     payload 里的 voice（契约 §5 / §9）：true = 本次求助带上留声，
+     走「带留声」路径；否则就是原有路径。 */
+  App.on('sos:tap', function (e) {
+    if (App.state.stage !== 'IDLE') return;
+
+    App.state.voiceMode = (e && e.voice === true) ? 'voice' : 'plain';
+    if (App.state.voiceMode === 'voice') {
+      App.log('本次求助带上留声，将同步放给家属与机构', { hi: true });
+    }
+
+    App.next();
   });
 
   /* ───────── 机构确认接手（contract.md §5：跳过自动升级，直接进 VIDEO_SESSION） ─────────
@@ -263,6 +286,10 @@
     App.state.elapsedMs = 0;
     App.state.videoRoom = null;
     App.state.videoOpen = false;
+
+    /* 留声：只清「本次走哪条路 / 是否在放」，录好的留声保留（见 state 注释） */
+    App.state.voiceMode    = null;
+    App.state.voicePlaying = false;
 
     var tl = App.el('timeline');
     if (tl) tl.innerHTML = '';

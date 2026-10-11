@@ -98,6 +98,7 @@ load('src/core.state.js');
 globalThis.App = window.App;
 load('src/core.timeline.js');
 load('src/feature.speech.js');
+load('src/feature.voice.js');
 load('src/ui.family.js');
 
 /* ── 断言工具 ── */

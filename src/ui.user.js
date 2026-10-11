@@ -12,6 +12,8 @@
      UI-04  四步进度条：发起→机构→家属→志愿者到场         P1  ✅
      UI-05  兜底按钮「拨打 110 / 120」（不真拨号）         P1  ✅
      UI-06  定位显示「已获取您的位置」                     P1  ✅
+     UI-07  留声：先录一段话，求助时可选择放给家人与机构听  P0  ✅
+            （录制/导入/试听的能力在 src/feature.voice.js）
 
    ── 契约纪律（重要）────────────────────────────────────────
      · render 是纯函数：只读 state，只写 #user-badge / #user-screen
@@ -39,6 +41,11 @@
   var leftMs  = 0;       /* 窗口剩余毫秒（驱动圆环进度） */
   var timer   = null;    /* 取消窗口计时器 */
   var hold    = null;    /* 长按计时器 */
+
+  /* UI-07 留声：已留声时，按下求助先进入「带留声 / 直接求助」二选一。
+     这不是新阶段（状态机不动），只是①内部的子状态。 */
+  var choosing = false;
+  var useVoice = false;  /* 用户本次选的是否「带留声」 */
 
   function clearTimer() { if (timer) { clearInterval(timer); timer = null; } }
   function clearHold()  { if (hold)  { clearTimeout(hold);   hold  = null; } }
@@ -130,6 +137,86 @@
            '<div class="tiny dim center">' + App.esc(locationLine(s)) + '</div>';
   }
 
+  /* ═══════════ UI-07 留声（能力在 src/feature.voice.js） ═══════════
+     待机时留一段话（现场录 / 选一个音频文件）；按下求助时若已留声，
+     先问一句「要不要放出来」，选完再走原有的 1 秒可取消窗口。
+     契约纪律：不新增事件名，只在 sos:tap 的 payload 里多带 voice 字段。 */
+
+  function voiceCardHTML() {
+    /* 录音中（含正在等麦克风授权） */
+    if (App.voiceIsRecording && App.voiceIsRecording()) {
+      var ms  = App.voiceRecMs ? App.voiceRecMs() : 0;
+      var max = App.voiceMaxMs ? App.voiceMaxMs() : 30000;
+      var pct = Math.max(0, Math.min(100, (ms / max) * 100));
+      return '<div class="voice-card rec">' +
+          '<div class="voice-head"><span class="vc-ico">🎙</span><span>正在录音…</span>' +
+            '<b class="vc-dur mono">' + App.fmtTime(ms) + '</b></div>' +
+          '<div class="bar"><i style="width:' + pct.toFixed(1) +
+            '%;background:var(--danger)"></i></div>' +
+          '<button id="btn-voice-stop" class="primary-btn">■ 停止并保存</button>' +
+          '<div class="voice-note">最长 ' + Math.round(max / 1000) +
+            ' 秒；说给家人的话，一两句就够</div>' +
+        '</div>';
+    }
+
+    /* 已留声 */
+    if (App.state.voiceReady) {
+      return '<div class="voice-card ready">' +
+          '<div class="voice-head"><span class="vc-ico">🎙</span><span>已留声</span>' +
+            '<b class="vc-dur mono">' + App.fmtTime(App.state.voiceDurMs || 0) + '</b></div>' +
+          '<div class="voice-row">' +
+            '<button id="btn-voice-play" class="ghost-btn">▶ 试听</button>' +
+            '<button id="btn-voice-rec"  class="ghost-btn">重录</button>' +
+            '<button id="btn-voice-del"  class="ghost-btn">删除</button>' +
+          '</div>' +
+          '<div class="voice-note">求助时可以选它替你说</div>' +
+        '</div>';
+    }
+
+    /* 还没留声：两个入口，录音不可用时还有「选择音频」这条路 */
+    return '<div class="voice-card">' +
+        '<div class="voice-head"><span class="vc-ico">🎙</span>' +
+          '<span>留声 · 万一说不出话</span></div>' +
+        '<div class="voice-note">先留一句给家人的话，求助时可选择让它替你说</div>' +
+        '<div class="voice-row">' +
+          '<button id="btn-voice-rec"  class="ghost-btn">● 录一段</button>' +
+          '<button id="btn-voice-file" class="ghost-btn">选择音频</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  /* 求助发出后①自己的留声状态（②③④ 的留声条由 core 统一注入） */
+  function voiceSentHTML() {
+    if (App.state.voiceMode !== 'voice') return '';
+    var playing = !!App.state.voicePlaying;
+    return '<div class="voice-card ' + (playing ? 'rec' : 'ready') + '">' +
+        '<div class="voice-head"><span class="vc-ico">🎙</span>' +
+          '<span>' + (playing ? '正在播放你的留声' : '留声已随求助发出') + '</span>' +
+          (App.state.voiceDurMs
+            ? '<b class="vc-dur mono">' + App.fmtTime(App.state.voiceDurMs) + '</b>' : '') +
+        '</div>' +
+        '<div class="voice-row">' +
+          '<button id="btn-voice-play" class="ghost-btn">' +
+            (playing ? '■ 停止' : '▶ 重播留声') + '</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  /* 已留声时按下求助：二选一 */
+  function chooseHTML() {
+    return '<div class="screen-title center" style="font-size:20px;text-align:center">' +
+             '要用你的留声吗？' +
+           '</div>' +
+           '<div class="grow center col voice-choice">' +
+             '<button id="btn-sos-voice" class="primary-btn danger">🎙 带着留声求助</button>' +
+             '<div class="voice-note center">系统会把这段声音放给家属与机构听</div>' +
+             '<button id="btn-sos-plain" class="ghost-btn">直接求助（不放留声）</button>' +
+           '</div>' +
+           '<div class="tiny dim center">留声时长 ' +
+             App.fmtTime(App.state.voiceDurMs || 0) + '</div>' +
+           '<button id="btn-cancel" class="ghost-btn">取消</button>';
+  }
+
   /* ═══════════ 渲染（contract.md §4：纯函数，返回 {badge, tone, html}） ═══════════ */
   App.define('user', function (state) {
     var s = state.stage;
@@ -140,6 +227,9 @@
          ② 长按 1.2 秒         → 直接进入可取消窗口
        窗口内可点「取消」撤回；走完才 emit('sos:tap') 由 core 推进阶段。 */
     if (s === 'IDLE') {
+      /* 已留声时按下求助 → 先选走哪条路（不是新阶段，状态机不动） */
+      if (choosing) return { badge: '确认中…', tone: 'danger', html: chooseHTML() };
+
       var pct  = pending ? Math.max(0, Math.min(1, leftMs / WINDOW_MS)) : 0;
       var dash = 2 * Math.PI * 96;                    /* r=96 → 周长 */
       var off  = dash * (1 - pct);
@@ -178,6 +268,7 @@
           '<div class="grow center" style="position:relative">' +
             ring + sosBtn +
           '</div>' +
+          (pending ? '' : voiceCardHTML()) +
           '<div class="tiny dim center">📍 ' + App.esc(D.user.address) + '</div>' +
           (pending ? '' : '<div class="tiny dim center">长按 1.2 秒同样可以求助</div>') +
           cancel
@@ -204,6 +295,7 @@
         '<div class="screen-title center" style="font-size:22px;text-align:center">' +
           App.esc(statusTitle(s)) +
         '</div>' +
+        voiceSentHTML() +
         '<div class="grow center col" style="gap:12px">' +
           pulseHTML(s) +
         '</div>' +
@@ -213,6 +305,19 @@
   });
 
   /* ═══════════ UI-02 取消窗口：开始 / 结束 / 取消 ═══════════ */
+
+  /* 按下求助的总入口：有留声就先问一句，没有就直接走原有的可取消窗口 */
+  function beginAsk() {
+    if (pending || choosing) return;
+    if (App.state.voiceReady) {
+      choosing = true;
+      App.render('user');
+      return;
+    }
+    useVoice = false;                        /* 没留声 = 原有路径 */
+    armWindow();
+  }
+
   function armWindow() {
     if (pending) return;                     /* 幂等：长按与单击可能同时到 */
     clearTimer();
@@ -238,14 +343,17 @@
     pending = false;
     leftMs  = 0;
     App.log('用户按下「我需要帮助」，已发出', { hi: true });
-    App.emit('sos:tap', { at: Date.now() });
+    /* 契约 §5：sos:tap 的 payload 多带一个 voice（true = 本次带留声） */
+    App.emit('sos:tap', { at: Date.now(), voice: useVoice === true });
     App.render('user');
   }
 
   function cancelSend() {
     clearTimer();
-    pending = false;
-    leftMs  = 0;
+    pending   = false;
+    choosing  = false;
+    useVoice  = false;
+    leftMs    = 0;
     App.log('用户在可取消窗口内取消了本次求助');
     App.render('user');
   }
@@ -258,12 +366,36 @@
     if (!sc || sc.__userWired) return;
     sc.__userWired = true;
 
-    /* ① 单击 SOS → 进入可取消窗口 */
+    /* ① 单击 SOS → 有留声先二选一，否则直接进可取消窗口 */
     sc.addEventListener('click', function (e) {
-      if (e.target.closest('#btn-sos') && !pending) armWindow();
+      if (e.target.closest('#btn-sos') && !pending && !choosing) beginAsk();
 
-      /* 取消：窗口内撤回 */
-      if (e.target.closest('#btn-cancel') && pending) cancelSend();
+      /* UI-07 二选一：带留声 / 原有路径 */
+      if (e.target.closest('#btn-sos-voice')) {
+        useVoice = true; choosing = false; armWindow();
+      }
+      if (e.target.closest('#btn-sos-plain')) {
+        useVoice = false; choosing = false; armWindow();
+      }
+
+      /* 取消：可取消窗口内、或二选一时都能撤回 */
+      if (e.target.closest('#btn-cancel')) {
+        if (choosing) { choosing = false; App.render('user'); }
+        else if (pending) cancelSend();
+      }
+
+      /* UI-07 留声：录 / 停 / 选文件 / 试听（或停止）/ 删除 */
+      if (e.target.closest('#btn-voice-rec')) {
+        if (App.voiceIsRecording && App.voiceIsRecording()) App.voiceRecordStop();
+        else if (App.voiceRecordStart) App.voiceRecordStart();
+      }
+      if (e.target.closest('#btn-voice-stop') && App.voiceRecordStop) App.voiceRecordStop();
+      if (e.target.closest('#btn-voice-file') && App.voicePickFile)   App.voicePickFile();
+      if (e.target.closest('#btn-voice-del')  && App.voiceClear)      App.voiceClear();
+      if (e.target.closest('#btn-voice-play')) {
+        if (App.state.voicePlaying) { if (App.voiceStop) App.voiceStop(); }
+        else if (App.voicePlay) App.voicePlay();
+      }
 
       /* UI-05 兜底拨号：仅打日志，红线要求不真拨号 */
       if (e.target.closest('#btn-call110')) {
@@ -271,13 +403,13 @@
       }
     });
 
-    /* ② 长按兜底入口：UI-01 的"长按同样可以求助" */
+    /* ② 长按兜底入口：UI-01 的"长按同样可以求助"（与单击同一条路径） */
     function startHold(e) {
-      if (!e.target.closest('#btn-sos') || pending) return;
+      if (!e.target.closest('#btn-sos') || pending || choosing) return;
       clearHold();
       hold = setTimeout(function () {
         hold = null;
-        armWindow();
+        beginAsk();
       }, HOLD_MS);
     }
     function endHold() { clearHold(); }
@@ -294,9 +426,11 @@
       sc.addEventListener('touchend', endHold);
     }
 
-    /* ③ 键盘救场：Esc 取消窗口（与全局快捷键不冲突） */
+    /* ③ 键盘救场：Esc 取消（二选一或可取消窗口内都有效，与全局快捷键不冲突） */
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && pending) cancelSend();
+      if (e.key !== 'Escape') return;
+      if (choosing) { choosing = false; App.render('user'); }
+      else if (pending) cancelSend();
     });
   })();
 
@@ -304,8 +438,10 @@
   App.on('app:reset', function () {
     clearTimer();
     clearHold();
-    pending = false;
-    leftMs  = 0;
+    pending  = false;
+    leftMs   = 0;
+    choosing = false;
+    useVoice = false;
   });
 
   console.log('[ui.user] 已注册 · 取消窗口 ' + (WINDOW_MS / 1000) + 's · 长按 ' +
