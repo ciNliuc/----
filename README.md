@@ -37,7 +37,7 @@
 │   ├── ui.institution.js      ← ② 专业机构工作台                   [B]
 │   ├── ui.family.js           ← ③ 紧急联系人（家人手机）           [C]
 │   ├── ui.volunteer.js        ← ④ 志愿者 + 地图 + 视频             [D]
-│   ├── feature.video.js       ← 真实视频通话拉起 + 降级            [D]
+│   ├── feature.video.js       ← 真视频方案（**已停用保留**，无调用点）[D]
 │   ├── feature.speech.js      ← 中文语音播报                       [C]
 │   ├── feature.voice.js       ← ⑤「留声」：录一段话，求助时可选放出 [框架]
 │   └── ui.report.js           ← 收尾回访卡片 + 数据小结            [B]
@@ -73,7 +73,7 @@ Start-Process .\index.html
 | **A · 求助者端** | `src/ui.user.js` | 求救按钮、倒计时圆环、状态文案、步骤条 |
 | **B · 机构 + 收尾** | `src/ui.institution.js`、`src/ui.report.js` | 告警卡片、确认倒计时、自动升级横幅、回访看板 |
 | **C · 家属 + 语音** | `src/ui.family.js`、`src/feature.speech.js` | 来电动画、响应选项、未登记分支、中文播报 |
-| **D · 志愿者 + 视频** | `src/ui.volunteer.js`、`src/feature.video.js` | 接单与超时转派、地图路线动画、距离递减、真实视频通话 + 纯 CSS 降级、路演真拨电话 |
+| **D · 志愿者 + 视频** | `src/ui.volunteer.js`、`src/feature.video.js` | 接单与超时转派、地图路线动画、距离递减、视频通话状态（**模拟接通**，不弹窗）、路演真拨电话 |
 
 **2 人团队**：框架/A 一人，B+C+D 合并给另一人（优先级：机构 → 视频 → 家属 → 语音）。
 **5 人以上**：拆出专人做 `data.demo.js` 与讲稿、以及 §9 的备份视频录制。
@@ -101,7 +101,7 @@ Start-Process .\index.html
 - [x] ③ 家属端细化实现（`c/family`，见 [docs/家属端细化设计.md](docs/家属端细化设计.md)）
 - [x] ④ 志愿者端细化实现（`d/volunteer`，见 [docs/志愿者端细化设计.md](docs/志愿者端细化设计.md)）
 - [x] 中文语音播报（`src/feature.speech.js`）
-- [x] ④ 视频通话拉起 + 纯 CSS 降级（`src/feature.video.js`）
+- [x] ④ 视频通话改为**模拟接通**（需求 v2.2）：进 `VIDEO_SESSION` 只显示「已发起视频通话 / 志愿者正在赶来」+ 地图 + 到场按钮，**不弹窗、不需要第二台设备**；原真视频方案保留在 [src/feature.video.js](src/feature.video.js)（已无调用点）
 - [x] 四个角色分支全部合并进 `main`（本次合并，见 [tools/dev-board.md](tools/dev-board.md) §五）
 - [x] ⑤ **留声**（[需求.md](需求.md) UI-07 / FR-15）：求助前录一段话或选一个音频文件；求助时二选一——「带着留声求助」或「直接求助（原有路径）」；带留声时进 `SOS_TRIGGERED` 放出声音，②③④ 面板头出现留声角标（[src/feature.voice.js](src/feature.voice.js)）
 - [ ] 联调 + 视频接通（需要第二台设备现场验"真出人脸"）
@@ -120,7 +120,8 @@ Start-Process .\index.html
 | 四列手机布局（真浏览器渲染） | ✅ Edge 无头实测 1920×1080 / 1366×768，IDLE / AUTO_ESCALATE / VIDEO_SESSION 三态：四格 `scrollHeight == clientHeight`（无溢出、无重叠），等比缩放由 `--phone-scale` 驱动 |
 | ⑤ 留声：两条路径 / 二选一可取消 / 降级 / 七阶段（52 项） | ✅ `node tools/voice-smoke.js .` → **52/52 通过** |
 | 留声不改变四格屏内容（真浏览器实测） | ✅ 带留声与原有路径的四格 `hid` 完全相同（`institution:hid=20` 两条一致，非留声引起）；角标挂在 `.panel-head` |
-| 浏览器实际运行效果 | ⚠️ **仍未测**：视频弹窗与队友人脸、语音播报出声、动画观感需真机现场确认 |
+| ④ 视频改为模拟接通 | ✅ `volunteer-smoke` 断言：进 `VIDEO_SESSION` 时 `window.open` **调用次数 = 0**，无视频按钮/无「打开视频窗口」文案，屏上为「已发起视频通话 / 志愿者正在赶来」；Edge 无头实测 `videoOpen=true`、`videoRoom=模拟视频房间` |
+| 浏览器实际运行效果 | ⚠️ **仍未测**：语音播报出声、动画观感需真机现场确认（视频已改为模拟，不再需要第二台设备） |
 | 留声真录音（MediaRecorder / 麦克风权限） | ⚠️ **仍未测**：`file://` 下部分浏览器会拒麦克风，现场优先试「录一段」，不行就用「选择音频文件」（该路径已验证可用） |
 | 四个角色分支合并 | ✅ `a/user` `b/institution` `c/family` `d/volunteer` 已全部并入 `main` |
 | git 首次提交 | ✅ 工作区 clean，未推远程 |

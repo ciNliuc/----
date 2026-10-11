@@ -3,14 +3,18 @@
    负责人：D
    契约：contract.md §3 §4 §5      调试：App.jump('VIDEO_SESSION')
    本模块负责：接单倒计时与超时转派 / 地图路线动画 / 距离递减 /
-               拉起视频 / 到场打卡
+               视频通话状态（模拟）/ 到场打卡
 
-   ─── 本次改动要点（D 分支） ───
+   ─── 本次改动要点 ───
    1. 接单 5 秒倒计时 + 超时自动转派下一位（需求 UI-31 / dev-board P0）
    2. 距离递减改用「进入本阶段起」的相对时间，不再用全局 elapsedMs
       （原来进 VIDEO_SESSION 时全局早已超过 MAP_TRAVEL_SEC，距离恒为 0）
    3. 地图上志愿者圆点随路线真正移动（原实现只改数字、点不动）
    4. 到场打卡只 emit volunteer:onSite，不自己 App.next()（契约 §1）
+   5. **【需求变更】不做真实视频通话**：进入 VIDEO_SESSION 即视为"已发起"，
+      屏上只显示「已发起视频通话 / 志愿者正在赶来」+ 地图 + 到场按钮。
+      原来那套拉起第三方房间的实现保留在 src/feature.video.js（已无调用点），
+      要退回真视频只需在 VIDEO_SESSION 重新调 App.openVideo()。
    ════════════════════════════════════════════════════════════════ */
 
 (function () {
@@ -293,27 +297,16 @@
         '<button class="ghost-btn" data-act="hangup">结束通话，我出发了</button>' +
       '</div>';
   }
-  /* ───────── 视频区 ───────── */
-  function isLive() {
-    return App.state.stage === 'VIDEO_SESSION' && !!App.state.videoRoom;
-  }
-
-  function videoHTML() {
-    if (!isLive()) {
-      return '<div class="video-stage empty tiny dim center">' +
-               '尚未接通视频 · 点击下方按钮开始' +
-             '</div>';
-    }
-    /* 通话画面统一由 feature.video.js 提供（单一来源，避免两处画不一样） */
-    return '<div class="video-stage">' +
-        App.callScreenHTML({
-          name:      cur().name,
-          seconds:   callSec,
-          showRoom:  !App.videoIsFallback()
-        }) +
-        '<div class="tiny dim center" style="padding:6px">' +
-          '通话中请不要承诺结果，只倾听与陪伴</div>' +
-      '</div>';
+  /* ───────── 视频通话区（模拟，不真拉起房间） ─────────
+     需求变更后 ④ 不再弹真实视频窗口：进入 VIDEO_SESSION 就是"已发起"，
+     屏上只讲清「已发起视频通话 + 志愿者正在赶来」。
+     真视频那套（feature.video.js 的 App.openVideo / callScreenHTML）保留但不再调用。 */
+  function videoStartedHTML() {
+    return '<div class="card ok">' +
+        '<div class="card-title">✓ 志愿者正在赶来</div>' +
+        '<div class="card-body">到达前保持通话：只倾听与陪伴，不承诺结果</div>' +
+      '</div>' +
+      '<div class="tiny dim center">演示为模拟接通，不弹窗、不依赖外网</div>';
   }
 
   function startCallTicker() {
@@ -360,14 +353,14 @@
           (callState === 'none'
             ? '<button class="primary-btn danger" data-act="dial">📞 拨打求助者</button>'
             : '<div class="tiny dim center">通话已发起，往下看通话状态</div>') +
-          '<button class="ghost-btn" data-act="video">改用视频疏导</button>' +
+          '<div class="tiny dim center">进入下一步会自动发起视频通话</div>' +
           '<div class="tiny dim center">建议双人同行 · 开启位置共享</div>'
       };
     }
 
-    /* ── 通话 / 视频疏导 ──
-       路演主线走这里的 phone-call 分支：志愿者真拨电话，网页跟进状态。
-       原来那套"拉起第三方视频房间"保留着（加法，没删），随时能退回去。 */
+    /* ── 视频疏导（模拟） / 通话 ──
+       需求变更：不再弹真实视频窗口，进阶段即"已发起"。
+       路演主线仍走 phone-call 分支：志愿者真拨电话，网页跟进状态。 */
     if (s === 'VIDEO_SESSION') {
       if (callState !== 'none') {
         return {
@@ -382,15 +375,11 @@
         };
       }
       return {
-        badge: isLive() ? '● 视频中' : '● 待接通',
-        tone:  isLive() ? 'on' : 'warn',
+        badge: '已发起视频', tone: 'on',
         html:
-          '<div class="screen-title">' +
-            (isLive() ? '正在视频疏导' : '准备视频疏导') + '</div>' +
-          videoHTML() +
+          '<div class="screen-title">已发起视频通话</div>' +
+          videoStartedHTML() +
           mapHTML() +
-          '<button class="primary-btn" data-act="video">' +
-            (isLive() ? '重新打开视频窗口' : '▶ 打开视频窗口') + '</button>' +
           '<button class="ghost-btn" data-act="arrive">我已到达现场</button>'
       };
     }
@@ -456,12 +445,6 @@
         distance = cur().distance;
         App.log('志愿者 ' + cur().name + ' 已接单', { hi: true });
         App.emit('volunteer:accept', { name: cur().name, distance: cur().distance });
-        App.render('volunteer');
-      },
-
-      /* 拉起视频。⚠️ App.openVideo 必须同步调用，包在 setTimeout 里会被拦弹窗 */
-      video: function () {
-        App.openVideo();
         App.render('volunteer');
       },
 
@@ -542,6 +525,17 @@
       travelBase = Date.now();
       /* 重新进入本阶段时若通话还在继续，把表接回去 */
       if (callState === 'connected' && !tickTimer) startCallTicker();
+
+      /* 【需求变更】不做真实视频通话：进这一阶段就视为"已发起"。
+         仍然走契约 §5 的 video:open（payload 语义不变，ok:true 表示已接通），
+         这样 ② 的旁听状态、时间线、boot.js 的停留时长都不用改。
+         room 用可读的模拟名，② 会把它显示在「房间已接通 ___」里。 */
+      if (!App.state.videoOpen) {
+        var simRoom = '模拟视频房间';
+        App.set({ videoRoom: simRoom, videoOpen: true });
+        App.emit('video:open', { room: simRoom, url: '', ok: true, fallback: false });
+        App.log('已发起视频通话，志愿者正在赶来', { hi: true });
+      }
     }
     /* 只有离开"通话可能进行中"的阶段才停表；
        VIDEO_SESSION → ON_SITE 时电话可能还通着，计时不能断。 */

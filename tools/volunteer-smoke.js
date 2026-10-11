@@ -11,7 +11,8 @@
              · 距离递减用「进入本阶段的相对时间」，不是全局 elapsedMs
              · 地图上志愿者圆点真的在移动
              · 到场只 emit volunteer:onSite，阶段由 core 统一推进（契约 §5）
-             · 视频弹窗成功 / 被拦两条路都能走，降级画纯 CSS
+             · **不做真实视频通话**（需求变更）：进 VIDEO_SESSION 即「已发起」，
+                window.open 一次都不会被调用；屏上只有「已发起视频通话 / 志愿者正在赶来」
              · 路演真拨电话：未拨 / 呼叫中 / 通话中三态 + 计时不冻表
              · 七个阶段逐格非空、重置无残留
    只读不改：不会修改仓库里任何文件。
@@ -295,7 +296,7 @@ function hardReset() {
   ok(App.state.stage === 'IDLE', '初始阶段 = IDLE', App.state.stage);
   ok(!!vsc() && text().trim().length > 4, '宫格④ 有内容（非空白）', text().slice(0, 40));
   ok(typeof App.openVideo === 'function' && typeof App.callScreenHTML === 'function',
-     'feature.video.js 提供了 openVideo / callScreenHTML');
+     'feature.video.js 仍在（保留备用，但已无调用点）');
   ok(typeof App.videoIsFallback === 'function', 'feature.video.js 提供了 videoIsFallback');
 
   /* ── 1. 待机 ── */
@@ -351,20 +352,23 @@ function hardReset() {
   ok(!!q('[data-act="dial"]'), '接单后出现"拨打求助者"按钮');
   ok(!q('[data-ack-bar]'), '接单后倒计时收起');
 
-  /* ── 5. 视频阶段：距离递减 + 圆点移动 ── */
-  console.log('\n\u2550\u2550\u2550 5. VIDEO_SESSION 距离递减 / 圆点移动 \u2550\u2550\u2550');
+  /* ── 5. 视频阶段：只显示"已发起"（不弹真实窗口）+ 距离递减 + 圆点移动 ── */
+  console.log('\n\u2550\u2550\u2550 5. VIDEO_SESSION：已发起视频通话（模拟） + 距离递减 \u2550\u2550\u2550');
+  const openCalls = [];
+  sandbox.open = (...a) => { openCalls.push(a); return { closed: false }; };
   App.next();
   ok(App.state.stage === 'VIDEO_SESSION', '进入 VIDEO_SESSION', App.state.stage);
-
-  sandbox.open = () => null;                    /* 弹窗被拦 → 降级 */
-  App.openVideo();
   advance(80);
-  ok(!!q('.video-call'), '降级后仍渲染通话画面 .video-call');
-  ok(/占位画面/.test(text()), '明确标注"占位画面（演示用，非真实接通）"');
-  ok(App.state.videoRoom && App.state.videoRoom.indexOf('fallback-') === 0,
-     'videoRoom 写入 fallback- 前缀', App.state.videoRoom);
-  ok(!/fallback-/.test(text()), '降级时不把房间名显示给队友');
-  ok(App.videoIsFallback() === true, 'videoIsFallback() = true');
+  ok(openCalls.length === 0,
+     '需求变更：进阶段不会真弹视频窗口（window.open 未被调用）', String(openCalls.length));
+  ok(/已发起视频通话/.test(text()), '屏上显示「已发起视频通话」');
+  ok(/志愿者正在赶来/.test(text()), '屏上显示「志愿者正在赶来」');
+  ok(!q('[data-act="video"]'), '已经没有"打开视频窗口"按钮');
+  ok(!/打开视频窗口/.test(text()), '文案里也不再有"打开视频窗口"');
+  ok(!q('.video-call'), '不再渲染真实通话画面');
+  ok(App.state.videoOpen === true, '接口上仍标记为已接通（videoOpen=true）');
+  ok(!!App.state.videoRoom, 'videoRoom 写入模拟房间名', String(App.state.videoRoom));
+  ok(/只倾听与陪伴/.test(text()), '带"只倾听与陪伴"提示');
 
   const d0 = readDist(vsc()), c0 = readDot(vsc());
   advance(6000);
@@ -373,7 +377,6 @@ function hardReset() {
   ok(d1 > 0, '距离不会在 30 秒内瞬间归零（相对时间生效）', d1);
   ok(c0 && c1 && (c0.cx !== c1.cx || c0.cy !== c1.cy), '地图圆点真的在移动',
      JSON.stringify({ c0, c1 }));
-  ok(/通话中请不要承诺结果/.test(text()), '视频区带"只倾听与陪伴"提示');
 
   /* ── 6. 到场打卡：只 emit，阶段由 core 统一推进 ── */
   console.log('\n\u2550\u2550\u2550 6. 到场打卡（契约 §5：core 推进阶段） \u2550\u2550\u2550');
@@ -420,24 +423,20 @@ function hardReset() {
   ok(/紧急派单/.test(text()) && !/已自动转派/.test(text()), '重置后重新派单，不再是转派态');
   ok(/王医生/.test(text()), '重置回王医生（activeIdx 复位）');
 
-  /* ── 10. 弹窗成功的分支 ── */
-  console.log('\n\u2550\u2550\u2550 10. 弹窗成功的分支 \u2550\u2550\u2550');
+  /* ── 10. 手动模式下停在 VIDEO_SESSION（自动推进只在"自动演示"打开时生效） ── */
+  console.log('\n\u2550\u2550\u2550 10. 手动模式不会自动跳走 \u2550\u2550\u2550');
   hardReset();
-  sandbox.open = () => ({ closed: false });       /* 这次"成功" */
+  sandbox.open = () => ({ closed: false });       /* 就算被调用也不该真弹 */
   App.jump('AUTO_ESCALATE');
   q('[data-act="accept"]').click();
   App.jump('VIDEO_SESSION');
-  const okFlag = App.openVideo();
-  advance(80);
-  ok(okFlag === true, 'openVideo 返回 true');
-  ok(App.state.videoRoom && App.state.videoRoom.indexOf('fallback-') !== 0,
-     'videoRoom 是真实房间名', App.state.videoRoom);
-  ok(/call-room-code/.test(vsc().innerHTML), '成功时显示房间名给队友看');
-  ok(!/占位画面/.test(text()), '成功时不显示"占位画面"');
-  ok(App.videoIsFallback() === false, 'videoIsFallback() = false');
+  advance(20000);                                 /* 远超 VIDEO_SEC（12 秒） */
+  ok(App.state.stage === 'VIDEO_SESSION',
+     '自动演示没开时，20 秒后仍停在 VIDEO_SESSION（等操作手推进）', App.state.stage);
+  ok(/已发起视频通话/.test(text()), '停留期间屏上仍是"已发起视频通话"');
 
-  /* ── 11. 四个动作按钮都要真的能点 ── */
-  console.log('\n\u2550\u2550\u2550 11. 四个动作按钮都要真的能点 \u2550\u2550\u2550');
+  /* ── 11. 动作按钮都要真的能点（视频按钮已按需求移除） ── */
+  console.log('\n\u2550\u2550\u2550 11. 动作按钮都要真的能点 \u2550\u2550\u2550');
   hardReset();                                   /* 顺手清掉 boot 的 12 秒自动推进 */
   sandbox.open = () => ({ closed: false });
   App.jump('AUTO_ESCALATE');
@@ -454,10 +453,8 @@ function hardReset() {
 
   App.jump('VIDEO_SESSION');
   advance(40);
-  q('[data-act="video"]').click();
-  advance(60);
-  ok(fired.indexOf('video') > -1, '② 视频按钮 → video:open');
-  ok(!!q('.video-call'), '视频按钮点完画面真的出来了');
+  ok(fired.indexOf('video') > -1, '② 进 VIDEO_SESSION → 自动 video:open（模拟，无需点按钮）');
+  ok(!q('[data-act="video"]'), '并且已经没有视频按钮可点');
 
   q('[data-act="arrive"]').click();
   advance(40);
@@ -530,7 +527,7 @@ function hardReset() {
   hardReset();
   App.jump('VIDEO_SESSION');
   advance(60);
-  ok(!/通话中|正在呼叫/.test(text()), '⑮ 重置后通话状态被清空（回到视频兜底分支）');
+  ok(!/通话中|正在呼叫/.test(text()), '⑮ 重置后通话状态被清空（回到"已发起视频通话"分支）');
   ok(!q('.dot-me'), '⑯ 重置后地图上没有移动中的点');
 
   console.log('\n\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550');

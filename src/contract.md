@@ -127,7 +127,7 @@ App.register('family', function renderFamily(state) {
 | `family:answer` | C | `{ choice: 'call' \| 'goto' \| 'unreachable' }` | B、时间线 |
 | `volunteer:accept` | D | `{ name, distance }` | B、时间线 |
 | `volunteer:onSite` | D | `{ at }` | core（推进到 `ON_SITE`）、A |
-| `video:open` | D | `{ room, ok: boolean }` | B、时间线 |
+| `video:open` | D | `{ room, url, ok, fallback }` | B（旁听状态）、boot（停留时长）、时间线 |
 | `demo:closed` | B | `{ at }` | core（推进到 `CLOSED`） |
 | `timer:tick` | core | `{ elapsedMs, stage }` | D（距离递减）、A（步骤条） |
 | `voice:recorded` | A（留声） | `{ name, durMs }` | 时间线 |
@@ -195,6 +195,7 @@ App.reset()
 | 2026-10-11 | 补实现 §5 已约定但一直缺失的 `sos:tap` 订阅（core.state.js 新增 `App.on('sos:tap')`，含 stage 校验），使「模块不得自己改阶段」真正成立；A 端 `ui.user.js` 同步移除自行的 `App.next()`。**接口签名/事件名/DOM id 均未改动** | A（求助者端） |
 | 2026-10-11 | 补实现 §5 已约定但一直缺失的两个订阅（core.state.js）：`institution:ack`（`SOS_TRIGGERED` / `INSTITUTION_ALERT` → **跳过自动升级**直接进 `VIDEO_SESSION`）与 `demo:closed`（`ON_SITE` → `CLOSED`），两者均带 stage 校验；B 端 `ui.institution.js` 的「立即确认接手」「结束处置」按钮由此真正生效。**接口签名/事件名/DOM id 均未改动** | B（机构端 + 收尾） |
 | 2026-10-11 | 补实现 §5 已约定但一直缺失的订阅（core.state.js）：`volunteer:onSite`（`VIDEO_SESSION` → `ON_SITE`，带 stage 校验，防重复点击越级）。D 端 `ui.volunteer.js` 的「我已到达现场」由此真正生效，模块自己不再调用 `App.next()`（契约 §1）。同时 D 端落地：接单 5 秒倒计时 + 超时自动转派下一位、地图圆点随路线真移动、距离递减改用进入本阶段的相对时间（不再依赖全局 `elapsedMs`）、路演真拨电话三态；`feature.video.js` 降级画面改纯 CSS（不再引用 `assets/video-fallback.png`），`video:open` payload **新增 `fallback` 字段**（原有 `room` / `url` / `ok` 不变）；`styles/modules.css` 只追加「④ 志愿者端」段落。**接口签名 / 事件名 / DOM id / `DEMO_DATA` 字段均未改动** | D（志愿者端 + 视频） |
+| 2026-10-12 | **视频通话改为「模拟接通」**（需求.md v2.2）：④ `ui.volunteer.js` 进 `VIDEO_SESSION` 时不再调用 `App.openVideo()`，改为自己写 `state.videoRoom` / `state.videoOpen` 并 **emit `video:open`（`ok: true`，`room` 用可读的模拟名）** —— 事件名、payload 字段、订阅方（B 的旁听状态 / boot 的停留时长 / 时间线）全都不变，所以 ② 与 boot.js 的订阅一行都不用改。④ 删掉「打开视频窗口」「改用视频疏导」按钮与 `data-act="video"` 动作，屏上只显示「已发起视频通话 / 志愿者正在赶来」+ 地图 + 到场按钮；`boot.js` 去掉 ▶ 的 `App.openVideo()` 与 `V` 快捷键，并给 `video:open` 的自动推进加了「只在自动演示打开时生效」守卫（手动模式不再 12 秒后自己跳走）。`src/feature.video.js` 保留但已无调用点——要退回真视频只需在 ④ 进阶段时重新调 `App.openVideo()`。**既有函数签名 / 事件名 / DOM id / `DEMO_DATA` 字段均未改动**；`video:open` 的 payload 说明在 §5 补全为 4 个字段 | 框架（视频改模拟） |
 | 2026-10-12 | **新增「留声」能力**（需求.md UI-07）：新文件 `src/feature.voice.js`（录制 / 导入 / 试听 / 播放 / ②③④ 角标）。§5 事件表新增 `voice:recorded` / `voice:play` / `voice:end`；`sos:tap` 的 payload **新增 `voice: boolean`**（原有 `at` 不变）——`true` 表示本次求助带上留声，core 据此写 `state.voiceMode`，②③④ 才出现留声角标；`false` / 缺省 = **原有路径，四格一行都不变**。§6 新增常量 `VOICE_MAX_SEC`。§2 新增留声 API 与 `App.state` 的 5 个 voice 字段（`App.reset()` 保留留声本身）。②③④ 的角标挂在 `.panel-head` 而不是手机屏内——机构端屏内容本就顶满，屏内插入会溢出。**既有函数签名 / 事件名 / DOM id / `DEMO_DATA` 字段均未改动**；`index.html` 增加一行 `feature.voice.js`（加载顺序契约随之更新），三套自测的加载列表同步加该文件，另附 `tools/voice-smoke.js`（52 项） | 框架（留声功能） |
 
 > 每次修改本文件，必须在此表追加一行，并在群里同步。

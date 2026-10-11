@@ -1,6 +1,13 @@
 /* ════════════════════════════════════════════════════════════════
    src/feature.video.js   ← 真实视频通话拉起 + 降级
-   负责人：D
+   负责人：框架负责人
+
+   ⚠️ 2026-10-12 起**已停用**（需求.md v2.2）：④ 进 VIDEO_SESSION 不再弹真实
+      视频窗口，只显示「已发起视频通话 / 志愿者正在赶来」，所以本文件的
+      App.openVideo() / App.callScreenHTML() 现在**没有任何调用点**。
+      代码与 video:open 的 payload 契约原样保留 —— 要退回真视频，只需在
+      ui.volunteer.js 进 VIDEO_SESSION 时重新调用 App.openVideo()。
+
    对外：App.openVideo() → boolean
    依赖：App.CONFIG.VIDEO_URL / VIDEO_ROOM
 

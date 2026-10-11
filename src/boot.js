@@ -38,7 +38,7 @@
     SOS_TRIGGERED:     2200,   /* 看求助者与机构同时亮起 */
     INSTITUTION_ALERT: function () { return C.AUTO_ESCALATE_SEC * 1000; },  /* 走完自动升级倒计时 */
     AUTO_ESCALATE:     3000,   /* 看家属外呼 + 志愿者派单 */
-    VIDEO_SESSION:     0,      /* ⚠️ 必须人工点击开视频（否则弹窗被拦） */
+    VIDEO_SESSION:     0,      /* 不真弹视频窗：进阶段即「已发起」，停留时长交给 video:open 接管 */
     ON_SITE:           5000,
     CLOSED:            0       /* 到底了 */
   };
@@ -65,9 +65,14 @@
   App.on('family:answer',    function () { updateButtons(); });
   App.on('volunteer:accept', function () { updateButtons(); });
 
-  /* 视频窗口打开后，让它停留 VIDEO_SEC 再自动进"到场" */
+  /* 视频通话「已发起」后，停留 VIDEO_SEC 再自动进"到场"。
+     需求变更后不再弹真实视频窗：这个事件由 ④（ui.volunteer.js）在进入
+     VIDEO_SESSION 时模拟发出（ok:true），节奏与原来一致。
+     ⚠️ 只在「自动演示」打开时自动推进；手动模式由操作手按 下一步/空格，
+        否则操作手还没讲完就被自动跳走了。 */
   App.on('video:open', function (e) {
     if (!e.ok) return;
+    if (!playing || !autoOn()) return;
     later(function () {
       if (App.state.stage === 'VIDEO_SESSION') App.next();
     }, (C.VIDEO_SEC || 12) * 1000);
@@ -82,9 +87,6 @@
     if (play) {
       if (s === 'IDLE') {
         play.textContent = '▶ 开始演示';
-        play.disabled = false;
-      } else if (s === 'VIDEO_SESSION') {
-        play.textContent = '▶ 打开视频窗口';
         play.disabled = false;
       } else if (s === 'CLOSED') {
         play.textContent = '▶ 已结束';
@@ -117,11 +119,6 @@
            （voiceReady 为假则与原行为完全一致）。 */
         playing = true;
         App.emit('sos:tap', { at: Date.now(), voice: !!App.state.voiceReady });
-
-      } else if (s === 'VIDEO_SESSION') {
-        /* ⚠️ 这里是真实用户手势，openVideo 必须同步调用 */
-        App.openVideo();
-        App.render('volunteer');
       }
     });
 
@@ -159,8 +156,6 @@
     }
     /* R ：重置 */
     if (e.key === 'r' || e.key === 'R') { clearTimers(); playing = false; App.reset(); }
-    /* V ：视频 */
-    if (e.key === 'v' || e.key === 'V') { App.openVideo(); App.render('volunteer'); }
     /* 1–7 ：直接跳到某个阶段（调试 / 救场） */
     var n = parseInt(e.key, 10);
     if (n >= 1 && n <= App.STAGES.length) { clearTimers(); App.jump(App.STAGES[n - 1]); }
@@ -215,6 +210,6 @@
 
   console.log('%c[App] boot 完成 —— Demo 就绪',
     'color:#3fb950;font-weight:700',
-    '\n快捷键：空格/→ 推进　R 重置　V 视频　1-7 直接跳阶段' +
+    '\n快捷键：空格/→ 推进　R 重置　1-7 直接跳阶段' +
     '\n自动演示：' + (autoOn() ? '开' : '关'));
 })();
