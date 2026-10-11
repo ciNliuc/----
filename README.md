@@ -44,10 +44,12 @@
 │   ├── base.css               ← 深色主题、变量、四宫格布局          [冻结]
 │   └── modules.css            ← 各模块私有样式（每人加自己的段落）  [各自追加]
 ├── docs/
-│   └── 家属端细化设计.md       ← ③ 家属端设计说明与自测清单          [C]
+│   ├── 家属端细化设计.md       ← ③ 家属端设计说明与自测清单          [C]
+│   └── 志愿者端细化设计.md     ← ④ 志愿者端 + 视频的设计说明与自测清单 [D]
 └── tools/
     ├── dev-board.md           ← 任务看板：谁在做什么、卡在哪
-    └── family-smoke.js        ← ③ 家属端逻辑自测（Node 零依赖，57 项）
+    ├── family-smoke.js        ← ③ 家属端逻辑自测（Node 零依赖，57 项）
+    └── volunteer-smoke.js     ← ④ 志愿者端 + 视频逻辑自测（Node 零依赖，94 项）
 ```
 
 ## 3. 怎么跑
@@ -69,7 +71,7 @@ Start-Process .\index.html
 | **A · 求助者端** | `src/ui.user.js` | 求救按钮、倒计时圆环、状态文案、步骤条 |
 | **B · 机构 + 收尾** | `src/ui.institution.js`、`src/ui.report.js` | 告警卡片、确认倒计时、自动升级横幅、回访看板 |
 | **C · 家属 + 语音** | `src/ui.family.js`、`src/feature.speech.js` | 来电动画、响应选项、未登记分支、中文播报 |
-| **D · 志愿者 + 视频** | `src/ui.volunteer.js`、`src/feature.video.js` | 接单、地图路线动画、距离递减、真实视频通话 |
+| **D · 志愿者 + 视频** | `src/ui.volunteer.js`、`src/feature.video.js` | 接单与超时转派、地图路线动画、距离递减、真实视频通话 + 纯 CSS 降级、路演真拨电话 |
 
 **2 人团队**：框架/A 一人，B+C+D 合并给另一人（优先级：机构 → 视频 → 家属 → 语音）。
 **5 人以上**：拆出专人做 `data.demo.js` 与讲稿、以及 §9 的备份视频录制。
@@ -92,10 +94,14 @@ Start-Process .\index.html
 - [x] 本地 git 仓库已初始化，首次提交 `d5224ca`
 - [x] 建远程仓库并 push（见 [协作指南.md](协作指南.md) §2）
 - [x] 邀请队友加入仓库（见 [协作指南.md](协作指南.md) §2.3）
+- [x] ① 求助者端细化实现（`a/user`）
+- [x] ② 机构端细化实现（`b/institution`）
 - [x] ③ 家属端细化实现（`c/family`，见 [docs/家属端细化设计.md](docs/家属端细化设计.md)）
+- [x] ④ 志愿者端细化实现（`d/volunteer`，见 [docs/志愿者端细化设计.md](docs/志愿者端细化设计.md)）
 - [x] 中文语音播报（`src/feature.speech.js`）
-- [ ] 其余三个模块各自细化实现（A / B / D）
-- [ ] 联调 + 视频接通
+- [x] ④ 视频通话拉起 + 纯 CSS 降级（`src/feature.video.js`）
+- [x] 四个角色分支全部合并进 `main`（本次合并，见 [tools/dev-board.md](tools/dev-board.md) §五）
+- [ ] 联调 + 视频接通（需要第二台设备现场验"真出人脸"）
 - [ ] 录制备份视频
 - [ ] 排练 ≥2 遍
 
@@ -103,9 +109,11 @@ Start-Process .\index.html
 
 | 项 | 状态 |
 |---|---|
-| 12 个 JS 文件语法（`node --check`） | ✅ 全部通过 |
+| 13 个 JS 文件语法（`node --check`：`src/*.js` + `tools/*.js`） | ✅ 全部通过 |
 | 七个阶段在四个模块都有渲染分支（不会出现空白格） | ✅ 静态核对通过 |
 | 模块注册顺序（四个 ui 均在 boot.js 之前） | ✅ 已确认 |
 | ③ 家属端 7 阶段 × 未登记/转呼/重置 分支 | ✅ `node tools/family-smoke.js .` → **57/57 通过** |
-| 浏览器实际运行效果 | ⚠️ **未测**，请刷新 `index.html` 自行确认 |
+| ④ 志愿者端 7 阶段 × 接单/转派/电话三态/重置（94 项） | ✅ `node tools/volunteer-smoke.js .` → **94/94 通过** |
+| 浏览器实际运行效果 | ⚠️ **未测**，请刷新 `index.html` 自行确认（尤其视频窗口与占位画面） |
+| 四个角色分支合并 | ✅ `a/user` `b/institution` `c/family` `d/volunteer` 已全部并入 `main` |
 | git 首次提交 | ✅ 工作区 clean，未推远程 |

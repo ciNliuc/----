@@ -179,5 +179,6 @@ App.reset()
 | — | 首次定稿 | 框架负责人 |
 | 2026-10-11 | 补实现 §5 已约定但一直缺失的 `sos:tap` 订阅（core.state.js 新增 `App.on('sos:tap')`，含 stage 校验），使「模块不得自己改阶段」真正成立；A 端 `ui.user.js` 同步移除自行的 `App.next()`。**接口签名/事件名/DOM id 均未改动** | A（求助者端） |
 | 2026-10-11 | 补实现 §5 已约定但一直缺失的两个订阅（core.state.js）：`institution:ack`（`SOS_TRIGGERED` / `INSTITUTION_ALERT` → **跳过自动升级**直接进 `VIDEO_SESSION`）与 `demo:closed`（`ON_SITE` → `CLOSED`），两者均带 stage 校验；B 端 `ui.institution.js` 的「立即确认接手」「结束处置」按钮由此真正生效。**接口签名/事件名/DOM id 均未改动** | B（机构端 + 收尾） |
+| 2026-10-11 | 补实现 §5 已约定但一直缺失的订阅（core.state.js）：`volunteer:onSite`（`VIDEO_SESSION` → `ON_SITE`，带 stage 校验，防重复点击越级）。D 端 `ui.volunteer.js` 的「我已到达现场」由此真正生效，模块自己不再调用 `App.next()`（契约 §1）。同时 D 端落地：接单 5 秒倒计时 + 超时自动转派下一位、地图圆点随路线真移动、距离递减改用进入本阶段的相对时间（不再依赖全局 `elapsedMs`）、路演真拨电话三态；`feature.video.js` 降级画面改纯 CSS（不再引用 `assets/video-fallback.png`），`video:open` payload **新增 `fallback` 字段**（原有 `room` / `url` / `ok` 不变）；`styles/modules.css` 只追加「④ 志愿者端」段落。**接口签名 / 事件名 / DOM id / `DEMO_DATA` 字段均未改动** | D（志愿者端 + 视频） |
 
 > 每次修改本文件，必须在此表追加一行，并在群里同步。
