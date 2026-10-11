@@ -110,10 +110,11 @@
       var s = App.state.stage;
 
       if (s === 'IDLE') {
-        /* 走和用户点按钮完全相同的路径 */
+        /* 走和用户点按钮完全相同的路径。
+           ⚠️ 契约 §5：sos:tap 由 core 统一推进 IDLE → SOS_TRIGGERED，
+           这里**不能**再补一次 App.next()，否则会连跳两级、跳过 SOS_TRIGGERED。 */
         playing = true;
         App.emit('sos:tap', { at: Date.now() });
-        App.next();
 
       } else if (s === 'VIDEO_SESSION') {
         /* ⚠️ 这里是真实用户手势，openVideo 必须同步调用 */
@@ -147,7 +148,8 @@
     if (e.key === 'ArrowRight' || e.key === ' ') {
       e.preventDefault();
       playing = true;
-      if (App.state.stage === 'IDLE') { App.emit('sos:tap', {}); App.next(); }
+      /* 契约 §5：IDLE 下的 sos:tap 已由 core 推进，勿再补 App.next() */
+      if (App.state.stage === 'IDLE') { App.emit('sos:tap', {}); }
       else App.next();
     }
     /* R ：重置 */

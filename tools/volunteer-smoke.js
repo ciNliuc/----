@@ -310,7 +310,6 @@ function hardReset() {
   /* ── 2. 推进到派单 ── */
   console.log('\n\u2550\u2550\u2550 2. 推进到 AUTO_ESCALATE 派单 \u2550\u2550\u2550');
   App.emit('sos:tap', { at: NOW });
-  App.next();
   ok(App.state.stage === 'SOS_TRIGGERED', '进入 SOS_TRIGGERED');
   App.next();
   ok(App.state.stage === 'INSTITUTION_ALERT', '进入 INSTITUTION_ALERT');

@@ -52,8 +52,8 @@
 
 ## 四、P1 可砍（时间不够先扔这些）
 
-- [ ] 四步进度条（`ui.user.js`）
-- [ ] 兜底拨号按钮（`ui.user.js`）
+- [x] 四步进度条（`ui.user.js`）——UI-04 发起→机构→家属→志愿者到场
+- [x] 兜底拨号按钮（`ui.user.js`）——UI-05 仅展示、不真拨号（需求.md §1.2 红线）
 - [x] 机构派单列表与事件时间线（`ui.institution.js`）
 - [x] 家属三选项应答（`ui.family.js`）——含回执卡 / 后续卡 / 未接通转呼下一位 / 反悔按钮
 - [x] 处置记录表单（`ui.volunteer.js`）——按需求做的是"简化版"：点一下往时间线写一条结构化记录，路演够用
@@ -66,7 +66,7 @@
 | 时间 | 谁 | 卡在哪 | 谁在帮 | 结果 |
 |---|---|---|---|---|
 | 2026-10-11 | B | 契约 §5 的 `institution:ack` / `demo:closed` 一直没有订阅者（机构端「确认接手」「结束处置」点了没反应） | 框架负责人 | B 已按 A 上次补 `sos:tap` 的先例补上两处订阅并登记 contract.md §9 |
-| 2026-10-11 | B | **合并 A 分支后 `boot.js` 会连跳两级**：`emit('sos:tap')` 已由 core 推进到 `SOS_TRIGGERED`，`boot.js` 紧接着又调了一次 `App.next()` → 直接跳到 `INSTITUTION_ALERT`，`SOS_TRIGGERED` 那一拍看不见（`ui.user.js` 已不再自推阶段） | 框架负责人 | 待修：`boot.js` 的 ▶ 按钮与空格键去掉那句多余的 `App.next()` |
+| 2026-10-11 | B | **合并 A 分支后 `boot.js` 会连跳两级**：`emit('sos:tap')` 已由 core 推进到 `SOS_TRIGGERED`，`boot.js` 紧接着又调了一次 `App.next()` → 直接跳到 `INSTITUTION_ALERT`，`SOS_TRIGGERED` 那一拍看不见（`ui.user.js` 已不再自推阶段） | 框架负责人 | ✅ **已修**（合并进 `main` 时处理）：`src/boot.js` 的 ▶ 按钮与空格/→ 键去掉多余的 `App.next()`，`sos:tap` 由 core 统一推进。`boot.js` 的 ▶ 与空格两条路径均已验证落在 `SOS_TRIGGERED`；`tools/volunteer-smoke.js` 同步改正「emit 之后又 next」的旧写法，**94/94 通过** |
 | 2026-10-11 | C | **`core.state.js` 的 `App.delegate` 每个 role 只有第一次调用生效**（`__delegated` 守卫会静默丢弃后续 selector/handler）。影响全部四个模块：家属端只有第 1 个按钮能点，志愿者端「开始视频」「我已到场」「填写处置记录」全部失效，求助者端兜底拨号失效 | 框架负责人 | 家属端已按「一个 role 只调一次 delegate + 逗号选择器 + 按 id 分派」规避，四个按钮都能点，**不需要等 core 修**。建议框架负责人评估改成 `sc.__delegates` 数组后，家属端可拆回四次调用 |
 | 2026-10-11 | C | `boot.js` 的 `HOLD.AUTO_ESCALATE = 3000ms`：家属外呼全屏只有 3 秒，字幕还没点亮第二句就切到视频阶段 | 框架负责人 | 家属端已兼容（字幕在 `VIDEO_SESSION` 里继续走完、不倒退），但改为 6000ms 观感明显更好。详见 `docs/家属端细化设计.md` §5.1 |
 | 2026-10-11 | D | **`core.state.js` 的 `App.delegate` 每个 role 只有第一次调用生效**（`sc.__delegated` 守卫会静默丢弃后续 selector/handler）。志愿者端有 6 个按钮，全都会变死按钮 | 框架负责人 | D 端按"自己绑一个原生委托 + 按 `data-act` 分派"绕开，**不需要等 core 修**（A 端改为不用 delegate，C 端改为"一个 role 只调一次 + 逗号选择器"）。建议框架负责人评估改成 `sc.__delegates` 数组，之后各端都能拆回自然写法 |
