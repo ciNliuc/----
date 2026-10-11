@@ -63,16 +63,32 @@
   font-size: 21px; font-weight: 800; line-height: 1.25;
   box-shadow: 0 0 0 0 rgba(248, 81, 73, .55);
   animation: sosPulse 1.9s ease-out infinite;
+  z-index: 2;                        /* 必须高于圆环 z-index:1，否则环的底色会盖住按钮 */
 }
 .sos-btn:active { transform: scale(.96); }
 .sos-text { position: relative; z-index: 2; }
 
-.sos-ring {
-  position: absolute; inset: -14px;
-  border-radius: 50%;
-  border: 2px solid rgba(248, 81, 73, .45);
-  animation: sosRing 1.9s ease-out infinite;
+/* UI-02 可取消窗口的倒计时圆环（SVG 进度环）
+   r=96 → 周长 603.2，由 ui.user.js 通过 stroke-dashoffset 驱动进度。
+   pointer-events:none 让点击穿透到按钮与容器。 */
+.sos-ring-svg {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 204px; height: 204px;
+  margin: -102px 0 0 -102px;          /* 居中 */
+  transform: rotate(-90deg);          /* 12 点方向起画 */
+  pointer-events: none;
+  z-index: 1;
 }
+.sos-ring-bg {
+  fill: none; stroke: #21262d; stroke-width: 6;
+}
+.sos-ring-fg {
+  fill: none; stroke: var(--warn); stroke-width: 6; stroke-linecap: round;
+}
+/* 窗口内让按钮视觉退到后面（点击有效性由 JS 的 pending 判断控制，
+   这里不用 disabled 属性，避免禁用后 pointer 事件在部分浏览器不触发） */
+.sos-btn[disabled] { opacity: .82; cursor: default; animation: none; }
 @keyframes sosPulse {
   0%   { box-shadow: 0 0 0 0 rgba(248, 81, 73, .55); }
   70%  { box-shadow: 0 0 0 26px rgba(248, 81, 73, 0); }

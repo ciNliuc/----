@@ -223,6 +223,14 @@
     if (e.to === 'SOS_TRIGGERED' && !App.state.startedAt) startTicker();
   });
 
+  /* ───────── 求助触发（contract.md §5：sos:tap 由 core 推进阶段） ─────────
+     A 端（ui.user.js）在可取消窗口走完后 emit('sos:tap')，
+     由这里统一执行 IDLE → SOS_TRIGGERED，模块自己不改阶段。
+     加 stage 校验：防止长按 / 连点等竞态在非 IDLE 阶段误推进。 */
+  App.on('sos:tap', function () {
+    if (App.state.stage === 'IDLE') App.next();
+  });
+
   /* ───────── 重置（contract.md §2） ───────── */
   App.reset = function () {
     stopTicker();
