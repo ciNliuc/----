@@ -99,11 +99,14 @@
 
   function esc(s) { return App.esc(s); }
 
-  /* UI-15：机构侧处置日志 —— 面板内留一份，同时进底部全局时间线 */
+  /* UI-15：机构侧处置日志 —— 面板内留一份，默认同时进底部全局时间线。
+     opts.local = true 时只留在面板内：用于"这一步已经有别的角色在全局时间线上
+     记过一笔"的情况（例如自动升级，C/D 都会写），避免大屏时间线出现重复行。 */
   function instLog(text, opts) {
+    opts = opts || {};
     oplog.push({ t: App.fmtTime(App.state.elapsedMs || 0), text: text });
     while (oplog.length > OPLOG_MAX) oplog.shift();
-    App.log(text, opts);
+    if (!opts.local) App.log(text, { hi: !!opts.hi });
   }
 
   /* UI-10 声音提示：短促双音蜂鸣。
@@ -508,13 +511,16 @@
     App.render('institution');
   });
 
-  /* 自动升级广播（core emit）：横幅由阶段驱动，这里只记一笔 */
+  /* 自动升级广播（core emit）：横幅由阶段驱动，这里只在本面板记一笔。
+     local：全局时间线上 core（升级本身）、C（外呼家属）、D（未登记改派）各已记过，
+     机构端不再重复占行。 */
   App.on('escalate:auto', function () {
     escalated = true;
     if (D.user.registered) {
-      instLog('超时未确认，系统已自动外呼 ' + (D.contacts || []).length + ' 位紧急联系人');
+      instLog('超时未确认，系统已自动外呼 ' + (D.contacts || []).length + ' 位紧急联系人',
+              { local: true });
     } else {
-      instLog('用户未登记紧急联系人，系统改为直接派单附近志愿者');
+      instLog('用户未登记紧急联系人，系统改为直接派单附近志愿者', { local: true });
     }
     App.render('institution');
   });
