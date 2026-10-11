@@ -178,5 +178,6 @@ App.reset()
 |---|---|---|
 | — | 首次定稿 | 框架负责人 |
 | 2026-10-11 | 补实现 §5 已约定但一直缺失的 `sos:tap` 订阅（core.state.js 新增 `App.on('sos:tap')`，含 stage 校验），使「模块不得自己改阶段」真正成立；A 端 `ui.user.js` 同步移除自行的 `App.next()`。**接口签名/事件名/DOM id 均未改动** | A（求助者端） |
+| 2026-10-11 | 补实现 §5 已约定但一直缺失的两个订阅（core.state.js）：`institution:ack`（`SOS_TRIGGERED` / `INSTITUTION_ALERT` → **跳过自动升级**直接进 `VIDEO_SESSION`）与 `demo:closed`（`ON_SITE` → `CLOSED`），两者均带 stage 校验；B 端 `ui.institution.js` 的「立即确认接手」「结束处置」按钮由此真正生效。**接口签名/事件名/DOM id 均未改动** | B（机构端 + 收尾） |
 
 > 每次修改本文件，必须在此表追加一行，并在群里同步。

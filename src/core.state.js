@@ -231,6 +231,22 @@
     if (App.state.stage === 'IDLE') App.next();
   });
 
+  /* ───────── 机构确认接手（contract.md §5：跳过自动升级，直接进 VIDEO_SESSION） ─────────
+     B 端（ui.institution.js）点「立即确认接手」时 emit('institution:ack')，
+     由这里统一执行阶段流转，模块自己不改阶段。
+     加 stage 校验：只有还在"等确认"的两个阶段才允许跳过升级。 */
+  App.on('institution:ack', function () {
+    if (App.state.stage === 'SOS_TRIGGERED' || App.state.stage === 'INSTITUTION_ALERT') {
+      setStage('VIDEO_SESSION');
+    }
+  });
+
+  /* ───────── 处置闭环（contract.md §5：ON_SITE → CLOSED） ─────────
+     B 端（ui.institution.js）点「结束处置」时 emit('demo:closed')。 */
+  App.on('demo:closed', function () {
+    if (App.state.stage === 'ON_SITE') setStage('CLOSED');
+  });
+
   /* ───────── 重置（contract.md §2） ───────── */
   App.reset = function () {
     stopTicker();
