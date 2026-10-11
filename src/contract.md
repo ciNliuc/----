@@ -177,5 +177,6 @@ App.reset()
 | 日期 | 修改 | 修改人 |
 |---|---|---|
 | — | 首次定稿 | 框架负责人 |
+| 2026-10-11 | 补实现 §5 已约定但一直缺失的两个订阅（core.state.js）：`institution:ack`（`SOS_TRIGGERED` / `INSTITUTION_ALERT` → **跳过自动升级**直接进 `VIDEO_SESSION`）与 `demo:closed`（`ON_SITE` → `CLOSED`），两者均带 stage 校验；B 端 `ui.institution.js` 的「立即确认接手」「结束处置」按钮由此真正生效。**接口签名/事件名/DOM id 均未改动** | B（机构端 + 收尾） |
 
 > 每次修改本文件，必须在此表追加一行，并在群里同步。
