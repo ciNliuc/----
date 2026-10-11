@@ -1,0 +1,18 @@
+# 统一按文本处理，禁止 git 做自动换行转换
+# 作用：Windows 队友与 Mac 队友协作时，不会因为换行符不同
+#       把整个文件标记成"已修改"，从而制造出假的冲突。
+* text=auto eol=lf
+
+# 明确文本类型
+*.html  text
+*.css   text
+*.js    text
+*.md    text
+*.json  text
+
+# 二进制文件不参与换行处理
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.mp4   binary
+*.webm  binary

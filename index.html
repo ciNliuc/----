@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>自杀干预 · 多方联动演示</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="styles/base.css">
+<link rel="stylesheet" href="styles/modules.css">
+</head>
+<body>
+
+<!-- ═══════════ 顶栏：阶段 + 全局计时（框架负责人维护） ═══════════ -->
+<header id="topbar">
+  <div class="brand">
+    <span class="dot"></span>
+    <span class="brand-name">自杀干预 · 多方联动</span>
+  </div>
+  <div class="stage-wrap">
+    <span class="stage-label">当前环节</span>
+    <span id="stage-label">IDLE</span>
+  </div>
+  <div class="timer-wrap">
+    <span class="stage-label">已用时</span>
+    <span id="global-timer">00:00</span>
+  </div>
+</header>
+
+<!-- ═══════════ 四宫格（容器 id 冻结，勿改） ═══════════ -->
+<main id="grid">
+
+  <section class="panel" id="panel-user">
+    <div class="panel-head">
+      <span class="role">① 求助者本人</span>
+      <span class="badge" id="user-badge">待机</span>
+    </div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen" id="user-screen"><!-- ui.user.js --></div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-institution">
+    <div class="panel-head">
+      <span class="role">② 专业机构 · 社区服务</span>
+      <span class="badge" id="institution-badge">待机</span>
+    </div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen" id="institution-screen"><!-- ui.institution.js --></div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-family">
+    <div class="panel-head">
+      <span class="role">③ 紧急联系人 · 家人</span>
+      <span class="badge" id="family-badge">待机</span>
+    </div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen" id="family-screen"><!-- ui.family.js --></div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-volunteer">
+    <div class="panel-head">
+      <span class="role">④ 志愿者 · 附近响应者</span>
+      <span class="badge" id="volunteer-badge">待机</span>
+    </div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen" id="volunteer-screen"><!-- ui.volunteer.js --></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════ 底栏：时间线 + 控制条 ═══════════ -->
+<footer id="bottombar">
+  <div class="timeline-wrap">
+    <div class="timeline-title">事件时间线</div>
+    <ol id="timeline"></ol>
+  </div>
+  <div id="controls">
+    <button id="btn-play"  class="ctrl">▶ 开始演示</button>
+    <button id="btn-next"  class="ctrl ghost">下一步 →</button>
+    <button id="btn-reset" class="ctrl ghost">↺ 重置</button>
+    <label class="ctrl-toggle">
+      <input type="checkbox" id="chk-auto" checked> 自动演示
+    </label>
+  </div>
+</footer>
+
+<!-- 收尾回访全屏卡片（ui.report.js 负责内容） -->
+<div id="report-overlay" class="hidden"></div>
+
+<!-- ═══════════ 加载顺序：不可调换 ═══════════ -->
+<script src="src/data.demo.js"></script>
+<script src="src/core.state.js"></script>
+<script src="src/core.timeline.js"></script>
+<script src="src/feature.speech.js"></script>
+<script src="src/feature.video.js"></script>
+<script src="src/ui.user.js"></script>
+<script src="src/ui.institution.js"></script>
+<script src="src/ui.family.js"></script>
+<script src="src/ui.volunteer.js"></script>
+<script src="src/ui.report.js"></script>
+<script src="src/boot.js"></script>
+
+</body>
+</html>
